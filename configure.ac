@@ -32,6 +32,11 @@ AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],
          [enable glib, Build against glib. Use this when building for HLOS systems which use glib]))
 
+AC_ARG_WITH(sanitized-headers,
+      AS_HELP_STRING([--with-sanitized-headers=DIR],
+         [Specify the location of the sanitized Linux headers]),
+         [CFLAGS="$CFLAGS -I$withval"])
+
 if (test "x${with_glib}" = "xyes"); then
         PKG_CHECK_MODULES(GTHREAD, gthread-2.0 >= 2.16, dummy=yes,
                                 AC_MSG_ERROR(GThread >= 2.16 is required))
@@ -56,11 +61,9 @@ AC_ARG_WITH([dummy_diag],
       AC_HELP_STRING([--with-dummy_diag],
          [use dummy diag instead of libdiag]))
 
-if (test "x${with_dummy_diag}" = "xno"); then
-        PKG_CHECK_MODULES([DIAG], [diag])
-        AC_SUBST([DIAG_CFLAGS])
-        AC_SUBST([DIAG_LIBS])
-fi
+PKG_CHECK_MODULES([DIAG], [diag])
+AC_SUBST([DIAG_CFLAGS])
+AC_SUBST([DIAG_LIBS])
 
 AM_CONDITIONAL(USE_DUMMY_DIAG, test "x${with_dummy_diag}" = "xyes")
 

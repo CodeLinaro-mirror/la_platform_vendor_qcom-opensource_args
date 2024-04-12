@@ -20,7 +20,7 @@
 #include <sys/ioctl.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-heap.h>
-#include <linux/msm_audio.h>
+#include <sound/qcom/msm_audio.h>
 #ifdef AR_OSAL_USE_CUTILS
 #include <cutils/properties.h>
 #endif
