@@ -12,6 +12,7 @@
  */
 #include "ar_osal_types.h"
 #include "gsl_common.h"
+#include "gsl_intf.h"
 
 
 /*
@@ -40,7 +41,8 @@ int32_t gsl_dynamic_module_mgr_deinit(void);
  *
  * \return AR_EOK on success, error code otherwise
  */
-int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc);
+int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc,
+					gsl_acdb_handle_t handle);
 
 /*
  * \brief Unload bootup dynamic modules to spf
@@ -49,7 +51,8 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc);
  *
  * \return AR_EOK on success, error code otherwise
  */
-int32_t gsl_do_unload_bootup_dyn_modules(uint32_t master_proc);
+int32_t gsl_do_unload_bootup_dyn_modules(uint32_t master_proc,
+					gsl_acdb_handle_t handle);
 
 
 #endif //GSL_SPF_DYN_MODULE_MGR_H

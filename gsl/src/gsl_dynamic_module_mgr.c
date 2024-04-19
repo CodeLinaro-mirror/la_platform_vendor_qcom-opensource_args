@@ -170,22 +170,22 @@ int32_t gsl_dynamic_module_mgr_deinit(void)
 }
 
 static int32_t gsl_do_register_dynamic_modules(uint32_t master_proc,
-	bool_t dereg)
+	bool_t dereg, gsl_acdb_handle_t handle)
 {
 	uint32_t reg_data_offset = 0, i = 0, rc = AR_EOK, total_reg_data_sz = 0;
 	struct gsl_shmem_alloc_data shmem_params;
-	AcdbAmdbProcID acdb_req_proc_id;
+	AcdbAmdbDbHandle amdb_db_req;
 	AcdbBlob acdb_blob_rsp;
 	apm_cmd_header_t *apm_hdr;
 	uint64_t tmp_spf_addr = 0;
 	gpr_packet_t *send_pkt;
 	uint32_t spf_opcode = AMDB_CMD_REGISTER_MODULES;
-	uint32_t acdb_cmdid = ACDB_CMD_GET_AMDB_REGISTRATION_DATA;
+	uint32_t acdb_cmdid = ACDB_CMD_GET_AMDB_REGISTRATION_DATA_V2;
 	uint32_t found_proc_ids = 0x0;
 
 	if (dereg) {
 		spf_opcode = AMDB_CMD_DEREGISTER_MODULES;
-		acdb_cmdid = ACDB_CMD_GET_AMDB_DEREGISTRATION_DATA;
+		acdb_cmdid = ACDB_CMD_GET_AMDB_DEREGISTRATION_DATA_V2;
 	}
 	/*
 	 * loop computes the size for module registration data for all proc_ids
@@ -196,10 +196,11 @@ static int32_t gsl_do_register_dynamic_modules(uint32_t master_proc,
 		if (!gsl_spf_ss_state_is_ss_supported(master_proc, i))
 			continue;
 
-		acdb_req_proc_id.proc_id = i;
+		amdb_db_req.proc_id = i;
+		amdb_db_req.acdb_handle = handle;
 		acdb_blob_rsp.buf_size = 0;
 		acdb_blob_rsp.buf = NULL;
-		rc = acdb_ioctl(acdb_cmdid, &acdb_req_proc_id, sizeof(acdb_req_proc_id),
+		rc = acdb_ioctl(acdb_cmdid, &amdb_db_req, sizeof(amdb_db_req),
 			&acdb_blob_rsp, sizeof(acdb_blob_rsp));
 		if (rc != AR_EOK && rc != AR_ENOTEXIST) {
 			GSL_ERR("acdb get amdb_registration data failed %d", rc);
@@ -245,10 +246,11 @@ static int32_t gsl_do_register_dynamic_modules(uint32_t master_proc,
 			continue;
 		}
 
-		acdb_req_proc_id.proc_id = i;
+		amdb_db_req.proc_id = i;
+		amdb_db_req.acdb_handle = handle;
 		acdb_blob_rsp.buf = (uint8_t *)shmem_params.v_addr + reg_data_offset;
 		acdb_blob_rsp.buf_size = total_reg_data_sz; /* acdb returns fill sz */
-		rc = acdb_ioctl(acdb_cmdid, &acdb_req_proc_id, sizeof(acdb_req_proc_id),
+		rc = acdb_ioctl(acdb_cmdid, &amdb_db_req, sizeof(amdb_db_req),
 			&acdb_blob_rsp, sizeof(acdb_blob_rsp));
 		if (rc == AR_ENOTEXIST) {
 			/* continue to next proc id if no registration data */
@@ -300,11 +302,12 @@ exit:
 /*
  * load bootup time modules to spf
  */
-int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc)
+int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc,
+									gsl_acdb_handle_t handle)
 {
 	int32_t rc = AR_EOK;
 	uint32_t proc_id  = AR_SUB_SYS_ID_FIRST;
-	AcdbAmdbProcID acdb_req_proc_id;
+	AcdbAmdbDbHandle amdb_db_req;
 	AcdbBlob acdb_blob_rsp;
 	apm_cmd_header_t *apm_hdr;
 	uint8_t *spf_cmd = NULL;
@@ -315,7 +318,7 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc)
 		goto exit;
 
 	/* TODO: only register if master proc is booting up */
-	rc = gsl_do_register_dynamic_modules(master_proc, false);
+	rc = gsl_do_register_dynamic_modules(master_proc, FALSE, handle);
 	if (rc) {
 		GSL_ERR("failed to register dynamic modules %d", rc);
 		goto exit;
@@ -333,13 +336,14 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc)
 			continue;
 
 		/* query and load bootup time modules for current proc_id */
-		acdb_req_proc_id.proc_id = proc_id;
+		amdb_db_req.proc_id = proc_id;
+		amdb_db_req.acdb_handle = handle;
 
 		/* first query is for size */
 		acdb_blob_rsp.buf = NULL;
 		acdb_blob_rsp.buf_size = 0;
-		rc = acdb_ioctl(ACDB_CMD_GET_AMDB_BOOTUP_LOAD_MODULES,
-			&acdb_req_proc_id, sizeof(acdb_req_proc_id),
+		rc = acdb_ioctl(ACDB_CMD_GET_AMDB_BOOTUP_LOAD_MODULES_V2,
+			&amdb_db_req, sizeof(amdb_db_req),
 			&acdb_blob_rsp, sizeof(acdb_blob_rsp));
 		if (rc != AR_EOK && rc != AR_ENOTEXIST) {
 			GSL_ERR("acdb_ioctl failed %d", rc);
@@ -367,8 +371,8 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc)
 		gsl_memset(apm_hdr, 0, sizeof(*apm_hdr));
 		apm_hdr->payload_size = acdb_blob_rsp.buf_size;
 		acdb_blob_rsp.buf = spf_cmd + sizeof(*apm_hdr);
-		rc = acdb_ioctl(ACDB_CMD_GET_AMDB_BOOTUP_LOAD_MODULES,
-			&acdb_req_proc_id, sizeof(acdb_req_proc_id),
+		rc = acdb_ioctl(ACDB_CMD_GET_AMDB_BOOTUP_LOAD_MODULES_V2,
+			&amdb_db_req, sizeof(amdb_db_req),
 			&acdb_blob_rsp, sizeof(acdb_blob_rsp));
 		if (rc) {
 			GSL_ERR("acdb get amdb bootup load modules failed %d", rc);
@@ -393,7 +397,7 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc)
 					load_cmd->error_code);
 				rc = AR_EFAILED;
 				__gpr_cmd_free(p_rsp_pkt);
-		        	goto undo_module_registration;
+				goto undo_module_registration;
 			}
 
 			/* store the handles to be used in unload */
@@ -405,11 +409,11 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc)
 	}
 
 	goto exit;
-
 undo_module_registration:
 	GSL_ERR("Deregistering modules due to load modules failure");
-	gsl_do_register_dynamic_modules(master_proc, true);
+	gsl_do_register_dynamic_modules(master_proc, true, handle);
 	goto exit;
+
 free_gpr_pkt:
 	__gpr_cmd_free(send_pkt);
 exit:
@@ -419,7 +423,8 @@ exit:
 /*
  * unload bootup time modules from spf
  */
-int32_t gsl_do_unload_bootup_dyn_modules(uint32_t master_proc)
+int32_t gsl_do_unload_bootup_dyn_modules(uint32_t master_proc,
+					gsl_acdb_handle_t handle)
 {
 	int32_t first_rc = AR_EOK, rc = AR_EOK;
 	uint32_t proc_id = AR_SUB_SYS_ID_FIRST, load_rsp_pld_sz = 0;
@@ -485,7 +490,7 @@ int32_t gsl_do_unload_bootup_dyn_modules(uint32_t master_proc)
 		}
 	}
 
-	rc = gsl_do_register_dynamic_modules(master_proc, true);
+	rc = gsl_do_register_dynamic_modules(master_proc, true, handle);
 	if (rc)
 		GSL_ERR("failed to de-register dynamic modules %d", rc);
 

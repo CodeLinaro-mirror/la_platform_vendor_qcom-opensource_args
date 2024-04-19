@@ -94,6 +94,14 @@ struct gsl_rtgm_state_info {
 	struct gsl_signal sig;
 };
 
+struct gsl_acdb_client_info {
+	ar_list_node_t node; /**< list node of each acdb client */
+	struct gsl_acdb_data_files acdb_files; /**< client acdb file path info */
+	struct gsl_acdb_file acdb_delta_file;
+		/**< client delta acdb file path info */
+	gsl_acdb_handle_t acdb_handle; /**< acdb handle returned from AML */
+};
+
 static struct gsl_ctxt_ {
 	void **graph_list; /**< list of all graphs, one per GSL handle */
 	uint8_t graph_list_size; /**< size of graph list */
@@ -116,6 +124,8 @@ static struct gsl_ctxt_ {
 	/**< on SPF SSR/PDR, we need to reconfigure shmem and dyn modules */
 	bool_t rtc_conn_active;
 	/**< whether there is an active RTC session or not */
+	ar_list_t acdb_client_list; /**< list of acdb clients from PVM and GVM */
+	ar_osal_mutex_t acdb_client_lock;
 } gsl_ctxt;
 
 static inline gsl_handle_t to_gsl_handle(uint8_t index)
@@ -989,6 +999,8 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 		goto deinit_sgpool;
 	}
 
+	ar_list_init(&gsl_ctxt.acdb_client_list, NULL, NULL);
+	ar_osal_mutex_create(&gsl_ctxt.acdb_client_lock);
 	gsl_ctxt.graph_list_size = MAX_UC_GRAPHS;
 	gsl_ctxt.graph_list = gsl_mem_zalloc(gsl_ctxt.graph_list_size *
 				sizeof(void *));
@@ -1141,13 +1153,14 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 		 * TODO: Remove this once we are checking for
 		 * dynamic download readiness with IPC
 		 */
-		for (j = 0; j < GSL_DYN_DL_NUM_RETRIES; ++j){
-			rc = gsl_do_load_bootup_dyn_modules(master_procs[i]);
+		for (j = 0; j < GSL_DYN_DL_NUM_RETRIES; ++j) {
+			rc = gsl_do_load_bootup_dyn_modules(master_procs[i], NULL);
 			if (rc)
 				ar_osal_micro_sleep(GSL_TIMEOUT_US(GSL_DYN_DL_RETRY_MS));
 			else
 				break;
 		}
+
 		if (rc != AR_EOK && rc != AR_ENOTEXIST) {
 			GSL_ERR("dynamic module load failed %d", rc);
 			goto dyn_module_mgr_deinit;
@@ -1236,7 +1249,7 @@ void gsl_deinit(void)
 						master_procs);
 
 		for (i = 0; i < num_master_procs; i++)
-			gsl_do_unload_bootup_dyn_modules(master_procs[i]);
+			gsl_do_unload_bootup_dyn_modules(master_procs[i], NULL);
 	}
 
 	gsl_dynamic_module_mgr_deinit();
@@ -1244,9 +1257,8 @@ void gsl_deinit(void)
 	gsl_mdf_utils_deinit();
 	gsl_msg_builder_deinit();
 	if (master_procs != NULL) {
-		for (i = 0; i < num_master_procs; i++){
+		for (i = 0; i < num_master_procs; i++)
 			gsl_spf_ss_state_deinit(master_procs[i]);
-		}
 		gsl_mem_free(master_procs);
 	}
 	acdb_deinit();
@@ -1309,7 +1321,7 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 			/* retry for up to 3 seconds to help in cases
 			   where ADSP RPC thread not ready */
 			for (j = 0; j < GSL_DYN_DL_NUM_RETRIES_SSR; ++j) {
-				rc = gsl_do_load_bootup_dyn_modules(i);
+				rc = gsl_do_load_bootup_dyn_modules(i, NULL);
 				if (rc) {
 					ar_osal_micro_sleep(GSL_TIMEOUT_US(GSL_DYN_DL_RETRY_MS));
 				} else {
@@ -2275,4 +2287,94 @@ int32_t gsl_get_processed_buff_cnt(gsl_handle_t graph_handle,
 		*cnt = gsl_dp_get_processed_buff_cnt(&graph->write_info);
 
 	return AR_EOK;
+}
+
+int32_t gsl_add_database(struct gsl_acdb_data_files *acdb_data_files,
+	struct gsl_acdb_file *writable_file_path,
+	gsl_acdb_handle_t *acdb_handle)
+{
+	int32_t rc = AR_EOK;
+	acdb_handle_t acdb_hdl;
+	struct gsl_acdb_client_info *client = NULL;
+
+	client = gsl_mem_zalloc(sizeof(struct gsl_acdb_client_info));
+	if (!client)
+		return AR_ENOMEMORY;
+	GSL_MUTEX_LOCK(gsl_ctxt.acdb_client_lock);
+	rc = acdb_add_database((AcdbDatabaseFiles *)acdb_data_files,
+					(AcdbFile *)writable_file_path, &acdb_hdl);
+	if (rc != AR_EOK) {
+		GSL_ERR("add acdb database into global heap failure");
+		goto exit;
+	}
+	rc = gsl_do_load_bootup_dyn_modules(AR_AUDIO_DSP,
+				(gsl_acdb_handle_t)acdb_hdl);
+	if (rc) {
+		GSL_ERR("load bootup dync modules failure when adding acdb database");
+		goto remove_acdb;
+	}
+	gsl_memcpy((uint8_t *)&client->acdb_files,
+		sizeof(struct gsl_acdb_data_files),
+		acdb_data_files, sizeof(struct gsl_acdb_data_files));
+
+	if (writable_file_path != NULL)
+		gsl_memcpy((uint8_t *)&client->acdb_delta_file,
+				sizeof(struct gsl_acdb_file),
+				writable_file_path, sizeof(struct gsl_acdb_file));
+
+	client->acdb_handle = (gsl_acdb_handle_t)acdb_hdl;
+	ar_list_init_node(&client->node);
+	rc = ar_list_add_tail(&gsl_ctxt.acdb_client_list, &client->node);
+	*acdb_handle = (gsl_acdb_handle_t)acdb_hdl;
+	GSL_MUTEX_UNLOCK(gsl_ctxt.acdb_client_lock);
+	return rc;
+
+remove_acdb:
+	acdb_remove_database(&acdb_hdl);
+exit:
+	gsl_mem_free(client);
+	GSL_MUTEX_UNLOCK(gsl_ctxt.acdb_client_lock);
+	return rc;
+}
+
+int32_t gsl_remove_database(gsl_acdb_handle_t acdb_handle)
+{
+	uint32_t rc = AR_EOK;
+	ar_list_node_t *client_node = NULL;
+	struct gsl_acdb_client_info *client = NULL;
+	bool_t client_found = FALSE;
+
+	GSL_MUTEX_LOCK(gsl_ctxt.acdb_client_lock);
+
+	ar_list_for_each_entry(client_node, &gsl_ctxt.acdb_client_list) {
+		client = get_container_base(client_node,
+					struct gsl_acdb_client_info, node);
+		if (acdb_handle == client->acdb_handle) {
+			client_found = TRUE;
+			break;
+		}
+	}
+
+	if (client_found == FALSE) {
+		GSL_ERR("invalid acdb handle");
+		rc = AR_EBADPARAM;
+		goto exit;
+	}
+
+	rc = gsl_do_unload_bootup_dyn_modules(AR_AUDIO_DSP, acdb_handle);
+	if (rc) {
+		GSL_ERR("deregister dyn module by handle exited");
+		goto exit;
+	}
+
+	rc = acdb_remove_database(&client->acdb_handle);
+	if (rc) {
+		GSL_ERR("remove acdb files from data base exited");
+		goto exit;
+	}
+
+	ar_list_delete(&gsl_ctxt.acdb_client_list, &client->node);
+exit:
+	GSL_MUTEX_UNLOCK(gsl_ctxt.acdb_client_lock);
+	return rc;
 }

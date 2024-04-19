@@ -31,6 +31,9 @@
 
 #define GSL_GPR_DST_PORT_APM  (APM_MODULE_INSTANCE_ID)
 #define GSL_4KB_MULTIPLE_SIZE(x)  (((x) + 4095) & (~4095))
+#define IS_ONE_PARAM(param_size, payload_size) \
+	((GSL_ALIGN_8BYTE(param_size) + \
+	 sizeof(apm_module_param_data_t)) == payload_size)
 
 /* set config packets less than or equal to this size will be sent in-band  */
 #define GSL_IN_BAND_SIZE_THRESHOLD 256
@@ -428,6 +431,7 @@ static int32_t gsl_apm_get_config_inband(struct gsl_graph *graph,
 	int32_t rc = AR_EOK;
 	struct gpr_packet_t *rsp_pkt = NULL;
 	struct apm_cmd_rsp_get_cfg_t *get_cfg_rsp;
+	apm_module_param_data_t *param_data = (apm_module_param_data_t *)payload;
 
 	rc = gsl_apm_config_inband(graph, payload, *payload_size, APM_CMD_GET_CFG,
 		dst_port, &rsp_pkt);
@@ -441,7 +445,13 @@ static int32_t gsl_apm_get_config_inband(struct gsl_graph *graph,
 	}
 
 	get_cfg_rsp = GPR_PKT_GET_PAYLOAD(struct apm_cmd_rsp_get_cfg_t, rsp_pkt);
-	if (get_cfg_rsp->status != AR_EOK) {
+	/*
+	 * For multiple parameter case, copy payload on partial failures
+	 * and success.
+	 * For one parameter case, we fail if the rsp status is an error.
+	 */
+	if (get_cfg_rsp->status != AR_EOK &&
+		IS_ONE_PARAM(param_data->param_size, *payload_size)) {
 		GSL_ERR("get config failed: spf status %d", get_cfg_rsp->status);
 		rc = AR_EFAILED;
 		goto exit;
@@ -478,13 +488,7 @@ static int32_t gsl_apm_config_oob(struct gsl_graph *graph,
 	struct ar_data_log_generic_pkt_info_t pkt_info;
 	struct apm_cmd_rsp_get_cfg_t *get_cfg_rsp;
 	struct gpr_packet_t *rsp_pkt = NULL;
-	bool_t is_shmem_supported = TRUE;
-
-	rc = __gpr_cmd_is_shared_mem_supported(graph->proc_id, &is_shmem_supported);
-	if (rc) {
-		GSL_ERR("GPR is shmem supported failed %d", rc)
-			goto exit;
-	}
+	apm_module_param_data_t *param_data = (apm_module_param_data_t *)payload;
 
 	rc = gsl_msg_alloc(opcode, graph->src_port, dst_port, sizeof(*cmd_header),
 		0, graph->proc_id, payload_size, false, &gsl_msg);
@@ -533,31 +537,24 @@ static int32_t gsl_apm_config_oob(struct gsl_graph *graph,
 		goto free_msg;
 	}
 
-	/*
-	 * In scenarios where there's no shared memory, we need to copy data
-	 * from rsp_pkt. Hence check if shared memory is supported.
-	 */
 	if (opcode == APM_CMD_GET_CFG) {
-		if (is_shmem_supported) {
-			gsl_memcpy((void *)payload, payload_size, gsl_msg.payload,
-				payload_size);
-		} else {
-			get_cfg_rsp = GPR_PKT_GET_PAYLOAD(struct apm_cmd_rsp_get_cfg_t,
-				rsp_pkt);
-			if (get_cfg_rsp->status != AR_EOK) {
-				GSL_ERR("get cfg failed, spf status %d", get_cfg_rsp->status);
-				goto free_msg;
-			}
-
-			rc = gsl_memcpy((void *)payload, payload_size,
-				(uint8_t *)rsp_pkt +
-				GPR_PKT_GET_HEADER_BYTE_SIZE(rsp_pkt->header) +
-				sizeof(apm_cmd_rsp_get_cfg_t),
-				GPR_PKT_GET_PAYLOAD_BYTE_SIZE(rsp_pkt->header) -
-				sizeof(apm_cmd_rsp_get_cfg_t));
-			if (rc)
-				GSL_ERR("memcpy failed %d", rc);
+		get_cfg_rsp = GPR_PKT_GET_PAYLOAD(struct apm_cmd_rsp_get_cfg_t,
+			rsp_pkt);
+		/*
+		 * For multiple parameter case, copy payload on partial failures
+		 * and success.
+		 * For one parameter case, we fail if the rsp status is an error.
+		 */
+		if (get_cfg_rsp->status != AR_EOK &&
+			IS_ONE_PARAM(param_data->param_size, payload_size)) {
+			GSL_ERR("get cfg failed, spf status %d", get_cfg_rsp->status);
+			goto free_msg;
 		}
+
+		rc = gsl_memcpy((void *)payload, payload_size,
+						gsl_msg.payload, payload_size);
+		if (rc)
+			GSL_ERR("memcpy failed %d", rc);
 	}
 
 free_msg:
@@ -1609,6 +1606,7 @@ int32_t gsl_graph_get_custom_config(struct gsl_graph *graph,
 	int32_t rc = AR_EOK;
 	apm_module_param_data_t *param_data = (apm_module_param_data_t *)payload;
 	uint32_t dst_port = GSL_GPR_DST_PORT_APM;
+	bool_t is_shmem_supported = TRUE;
 
 	GSL_MUTEX_LOCK(lock);
 	GSL_MUTEX_LOCK(graph->get_set_cfg_lock);
@@ -1624,7 +1622,13 @@ int32_t gsl_graph_get_custom_config(struct gsl_graph *graph,
 		dst_port = GSL_GPR_DST_PORT_APM;
 	}
 
-	if (payload_size <= GSL_IN_BAND_SIZE_THRESHOLD)
+	rc = __gpr_cmd_is_shared_mem_supported(graph->proc_id, &is_shmem_supported);
+	if (rc) {
+		GSL_ERR("GPR is shmem supported failed %d", rc)
+		goto exit;
+	}
+
+	if (payload_size <= GSL_IN_BAND_SIZE_THRESHOLD || !is_shmem_supported)
 		rc = gsl_apm_get_config_inband(graph, payload, &payload_size, dst_port);
 	else
 		rc = gsl_apm_config_oob(graph, payload, payload_size,
@@ -1633,6 +1637,7 @@ int32_t gsl_graph_get_custom_config(struct gsl_graph *graph,
 	if (rc)
 		GSL_ERR("Graph get custom config failed %d", rc);
 
+exit:
 	GSL_MUTEX_UNLOCK(graph->get_set_cfg_lock);
 	GSL_MUTEX_UNLOCK(lock);
 
@@ -4735,7 +4740,7 @@ int32_t gsl_graph_prepare_to_change_single_gkv(struct gsl_graph *graph,
 			continue;
 
 		gsl_sg_pool_add(params->sgs[i], FALSE);
-		preserved_sgids->sg_ids[k] = params->sgs[i];
+		preserved_sgids->sg_ids[i] = params->sgs[i];
 		++k;
 	}
 	/* Was set to maximum for malloc. set to real size */

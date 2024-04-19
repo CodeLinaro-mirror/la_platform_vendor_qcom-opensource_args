@@ -256,6 +256,9 @@ enum gsl_data_dir {
 
 typedef void *gsl_handle_t; /**< opaque handle that is returned to client */
 
+/** opaque acdb handle that is returned to client */
+typedef void *gsl_acdb_handle_t;
+
 /**
  * a single entry in a key vector
  */
@@ -1184,6 +1187,33 @@ int32_t gsl_get_supported_gkvs(uint32_t *key_ids,
  */
 int32_t gsl_get_graph_alias(const struct gsl_key_vector *graph_key_vect,
 	char *alias, uint32_t *alias_len);
+
+/**
+ * \brief add acdb database
+ *
+ * Extends the database by adding database files (*.acdb and *.qwsp) at runtime.
+ *
+ * \param[in] acdb_data_files: A list of database file paths
+ *  containing *.acdb and *.qwsp
+ * \param[in] writable_file_path: The delta data file path and temp files
+ * \param[in/out] acdb_handle: A handle to the database provided
+ * \return AR_EOK in success, error code otherwise
+ */
+int32_t gsl_add_database(struct gsl_acdb_data_files *acdb_data_files,
+	struct gsl_acdb_file *writable_file_path,
+	gsl_acdb_handle_t *acdb_handle);
+
+/**
+ * \brief remove acdb database
+ *
+ * Shrinks the database by removing all data associated with the given
+ * database handle at runtime.
+ * This includes database files (*.qwsp and .acdb) and heap data
+ *
+ * \param[in] acdb_handle: A handle to the database to remove
+ * \return AR_EOK in success, error code otherwise
+ */
+int32_t gsl_remove_database(gsl_acdb_handle_t acdb_handle);
 
 #ifdef __cplusplus
 }  /* extern "C" */
