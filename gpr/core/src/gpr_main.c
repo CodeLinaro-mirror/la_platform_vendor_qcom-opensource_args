@@ -41,6 +41,14 @@ GPR_EXTERNAL uint32_t gpr_init(void)
       AR_MSG(DBG_HIGH_PRIO, "GPR is already initialized");
       return AR_EOK;
    }
+   rc = gpr_log_init();
+#ifndef DISABLE_DEINIT
+   if (rc)
+   {
+	   (void)gpr_log_deinit();
+	   return AR_EFAILED;
+   }
+#endif
    rc = gpr_drv_init();
 #ifndef DISABLE_DEINIT
    if (rc)
@@ -48,14 +56,6 @@ GPR_EXTERNAL uint32_t gpr_init(void)
       (void)gpr_deinit();
       return AR_EFAILED;
    }
-
-   rc = gpr_log_init();
-   if (rc)
-   {
-      (void)gpr_deinit();
-      return AR_EFAILED;
-   }
-
 #endif
    gpr_init_flag = TRUE;
    return AR_EOK;

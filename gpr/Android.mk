@@ -33,6 +33,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/api \
     $(LOCAL_PATH)/api/private \
     $(LOCAL_PATH)/core/inc \
+    $(LOCAL_PATH)/core/inc/ar_utils/generic \
     $(LOCAL_PATH)/core/src \
     $(LOCAL_PATH)/ext/dynamic_allocation/inc \
     $(LOCAL_PATH)/ext/logging/inc \

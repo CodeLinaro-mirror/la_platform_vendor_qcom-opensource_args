@@ -10,7 +10,8 @@
 #include <errno.h>
 #include "gpr_api_i.h"
 #include "gpr_lx.h"
-#include <fcntl.h>
+#include <unistd.h>
+
 #ifdef GPR_USE_CUTILS
 #include <log/log.h>
 #else
@@ -18,11 +19,11 @@
 #ifndef ALOGD
 #define ALOGD(fmt, arg...) syslog (LOG_NOTICE, fmt, ##arg)
 #endif
-#ifndef ALOGE
-#define ALOGE(fmt, arg...) syslog (LOG_ERR, fmt, ##arg)
-#endif
 #ifndef ALOGI
 #define ALOGI(fmt, arg...) syslog (LOG_INFO, fmt, ##arg)
+#endif
+#ifndef ALOGE
+#define ALOGE(fmt, arg...) syslog (LOG_ERR, fmt, ##arg)
 #endif
 #endif
 

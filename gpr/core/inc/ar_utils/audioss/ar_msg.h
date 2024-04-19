@@ -10,7 +10,7 @@
  */
 // clang-format off
 /*
-$Header$
+$Header: //components/rel/gpr.common/1.0/core/inc/ar_msg.h#7 $
 */
 // clang-format on
 
@@ -26,6 +26,13 @@ INCLUDE FILES FOR MODULE
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
+
+#ifndef DBG_LOG_FIRM
+#define DBG_LOG_FIRM
+#endif
+#ifndef DBG_LOG_MAX_LEVEL
+#define DBG_LOG_MAX_LEVEL 5
+#endif
 
 /** Enable (1) or disable (0) the debug messagef */
 #define ar_log_debugmsg_enable 1
@@ -43,8 +50,10 @@ extern "C" {
 
 #if !defined(SIM) && (defined(__hexagon__) || defined(__XTENSA__))
 
-#include "msg.h"
-#include "msgcfg.h"
+//#include "msg.h"
+//#include "msgcfg.h"
+
+#include "dbg_diag_common.h"
 
 #define DBG_LOW_PRIO MSG_LEGACY_LOW   /**< Low priority debug message. */
 #define DBG_MED_PRIO MSG_LEGACY_MED   /**< Medium priority debug message. */
@@ -67,19 +76,11 @@ extern "C" {
 #endif // MSG_SSID_DFLT
 
 /* This Logging macro supports variable arguments*/
-#if defined(__XTENSA__)
 #define AR_MSG(xx_ss_mask, xx_fmt, ...)                                                                                \
 		if (ar_log_debugmsg_enable) \
 		{ \
 			AR_MSG_x(AR_VA_NUM_ARGS(__VA_ARGS__))(MSG_SSID_WEAR_AON_AUDIOSS, xx_ss_mask, xx_fmt, ##__VA_ARGS__); \
 		}
-#else
-#define AR_MSG(xx_ss_mask, xx_fmt, ...)                                                                                \
-		if (ar_log_debugmsg_enable) \
-		{ \
-			AR_MSG_x(AR_VA_NUM_ARGS(__VA_ARGS__))(MSG_SSID_QDSP6, xx_ss_mask, xx_fmt, ##__VA_ARGS__); \
-		}
-#endif
 #else  // !defined(SIM) && defined(__hexagon__)
 
 /*For simultation purposes */

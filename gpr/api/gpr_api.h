@@ -79,7 +79,7 @@ struct gpr_packet_pool_info_v2_t
    uint32_t num_packets;
    /* Max number of packets in the pool.
 
-      If is_dynamic is set to 0: indicates number of packets to be statically allocated
+      If is_dynamic is set to 0: indicates number of packets to be statically allocated 
       If is_dynamic > 0: indicates maximum number of packets that can be dynamically allocated at any given time.
       */
 
