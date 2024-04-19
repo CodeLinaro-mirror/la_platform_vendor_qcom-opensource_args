@@ -1,12 +1,6 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libarosal_headers
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/api
-LOCAL_VENDOR_MODULE := true
-include $(BUILD_HEADER_LIBRARY)
-
-include $(CLEAR_VARS)
 
 #----------------------------------------------------------------------------
 #                 Common definitons
@@ -44,6 +38,7 @@ LOCAL_SRC_FILES := src/linux/ar_osal_mutex.c \
                    src/linux/ar_osal_thread.c \
                    src/linux/ar_osal_signal.c \
                    src/linux/ar_osal_log.c \
+                   src/linux/ar_osal_stub_log_pkt_op.c \
                    src/linux/ar_osal_file_io.c \
                    src/linux/ar_osal_sleep.c\
                    src/linux/ar_osal_mem_op.c\
@@ -51,8 +46,7 @@ LOCAL_SRC_FILES := src/linux/ar_osal_mutex.c \
                    src/linux/ar_osal_timer.c\
                    src/linux/ar_osal_string.c
 
-LOCAL_SRC_FILES += src/linux/qcom/ar_osal_log_pkt_op.c \
-                   src/linux/qcom/ar_osal_servreg.c
+LOCAL_SRC_FILES += src/linux/qcom/ar_osal_servreg.c
 
 ifeq ($(TARGET_KERNEL_VERSION),$(filter $(TARGET_KERNEL_VERSION), 4.14 4.19 5.4))
 LOCAL_SRC_FILES += src/linux/qcom/ar_osal_shmem.c

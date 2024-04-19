@@ -20,7 +20,7 @@
 #include <sys/ioctl.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-heap.h>
-#include <sound/qcom/msm_audio.h>
+#include <linux/msm_audio.h>
 #ifdef AR_OSAL_USE_CUTILS
 #include <cutils/properties.h>
 #endif
@@ -30,15 +30,8 @@
 #include "ar_osal_sleep.h"
 
 #define  SHMEM_4K_ALIGNMENT       0x1000
-
-#ifndef ION_DRIVER_UNSUPPORTED
 #define AR_MEM_DRIVER_PATH "/dev/msm_audio_ion"
 #define AR_MEM_DRIVER_PATH_CMA "/dev/msm_audio_ion_cma"
-#else
-#define AR_MEM_DRIVER_PATH "/dev/msm_audio_mem"
-#define AR_MEM_DRIVER_PATH_CMA "/dev/msm_audio_mem_cma"
-#endif
-
 #define DMABUF_SYS_HEAP_PATH "/dev/dma_heap/system"
 #define DMABUF_SYS_HEAP_PATH_UNCACHED "/dev/dma_heap/qcom,system-uncached"
 #define DMABUF_SYS_HEAP_PATH_CMA "/dev/dma_heap/qcom,audio-ml"
@@ -157,8 +150,6 @@ int32_t ar_shmem_init(void)
 #ifdef AR_OSAL_USE_CUTILS
     pdata->dmabuf_cma_mem_enabled =
         property_get_bool("vendor.audio.feature.dmabuf.cma.memory.enable", false);
-#else
-    pdata->dmabuf_cma_mem_enabled = true;
 #endif
     if(pdata->dmabuf_cma_mem_enabled) {
         /*Check if dma_buf heap initialize the dmabuf_handle to invalid handle */
