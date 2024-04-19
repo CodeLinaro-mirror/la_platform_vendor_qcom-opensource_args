@@ -315,7 +315,11 @@ int32_t AcdbDeltaDataCmdSave()
 
     status = ar_fdelete(db_info->delta_file_path.path);
 
-	if (AR_EOK != status) return status;
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Failed to delete delta file", status);
+        return status;
+    }
 
 	/* Create new delta file and set ar_fhandle to acdb_delta_file_man_context
 	 * at findex. Check to see if file exists otherwise create it */
@@ -325,17 +329,21 @@ int32_t AcdbDeltaDataCmdSave()
 
 	status = AcdbInitUtilGetDeltaInfo2(
         &db_info->delta_file_path, &delta_info.properties);
-	if (AR_EOK != status)
+    if (AR_FAILED(status))
 	{
 		ACDB_ERR_MSG_1("Unable to create a new delta acdb file", status);
-        goto end;
+        return status;
 	}
 
     fsize = delta_info.properties.file_size;
     delta_info.properties.file_access = AR_FOPEN_READ_ONLY_WRITE;
 
 	status = AcdbInitUtilOpenDeltaFile(&delta_info, fhandle);
-	if (AR_EOK != status) goto end;
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Failed to open delta file", status);
+        return status;
+    }
 
 	db_info->file_handle = *fhandle;
 
@@ -343,7 +351,7 @@ int32_t AcdbDeltaDataCmdSave()
 		db_info->file_handle,
 		&db_info->file_info, 0, 0);
 
-	if (AR_EOK != status) goto end;
+    if (AR_FAILED(status)) goto end;
 
 	p_map_list = &map_list;
 
@@ -362,8 +370,11 @@ int32_t AcdbDeltaDataCmdSave()
 	}
 
 	status = ar_fseek(*fhandle, 0, AR_FSEEK_BEGIN);
-
-	if (AR_EOK != status) goto end;
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Failed to seek delta file", status);
+        goto end;
+    }
 
 	fsize = (uint32_t)ar_fsize(*fhandle);
 	fdata_size = fsize - sizeof(AcdbDeltaFileHeader) + sizeof(uint32_t);
@@ -380,7 +391,6 @@ int32_t AcdbDeltaDataCmdSave()
 end:
     AcdbListClear(p_map_list);
     p_map_list = NULL;
-    ar_fclose(*fhandle);
 
 	return status;
 }

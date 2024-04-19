@@ -19,7 +19,9 @@
 #if defined( __qdsp6__ )
 /* No packing atrributes for Q6 compiler; all structs manually packed */
 #elif defined( __GNUC__ ) && !defined( __INTEGRITY )
+#ifndef ARSDK
 __attribute__((packed, aligned(1)));
+#endif
 #elif defined( __INTEGRITY )
 #elif defined( ACDB_WP_PACK )
 #pragma pack( pop )

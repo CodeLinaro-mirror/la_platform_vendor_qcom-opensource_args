@@ -5867,7 +5867,7 @@ int32_t AcdbCmdGetSubgraphCalDataNonPersist(AcdbSgIdCalKeyVector *req,
             if (AR_FAILED(status) && status == AR_ENOTEXIST)
             {
                 //No calibration found for subgraph with module ckv_entry
-                has_cal_data = FALSE;
+                //has_cal_data = FALSE;
                 continue;
             }
             else if (AR_FAILED(status) && status != AR_ENOTEXIST)
@@ -5877,6 +5877,11 @@ int32_t AcdbCmdGetSubgraphCalDataNonPersist(AcdbSgIdCalKeyVector *req,
                     sg_cal_lut_header.subgraph_id);
                 AcdbClearAudioCalContextInfo(&info);
                 return status;
+            }
+
+            if (info.is_default_module_ckv && info.ignore_get_default_data)
+            {
+                continue;
             }
 
             has_cal_data = TRUE;
@@ -5899,7 +5904,7 @@ int32_t AcdbCmdGetSubgraphCalDataNonPersist(AcdbSgIdCalKeyVector *req,
     if (num_subgraph_found == 0)
     {
         status = AR_ENOTEXIST;
-        ACDB_ERR("Error[%d]: No calibration found", status);
+        ACDB_DBG("Error[%d]: No calibration found", status);
     }
 
     //Clean Up Context Info
@@ -9776,7 +9781,7 @@ int32_t AcdbGetAmdbBootLoadModuleData(
             // Go to next processor bootup entry
             proc_entry = (acdb_amdb_bootup_proc_table_entry_t*)
                 ((uint8_t*)proc_entry + proc_entry->num_modules
-                    * sizeof(uint32_t));
+                    * sizeof(uint32_t) + sizeof(acdb_amdb_bootup_proc_table_entry_t));
         }
 
         if (!found)

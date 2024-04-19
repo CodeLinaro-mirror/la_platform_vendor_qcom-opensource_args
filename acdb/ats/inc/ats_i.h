@@ -1148,6 +1148,82 @@ struct ats_cmd_mcs_play_record_req_t
 /** \} */ /* end_addtogroup ATS_CMD_MCS_STOP */
 
 /* ---------------------------------------------------------------------------
+* ATS_CMD_MCS_PLAY_2 Declarations and Documentation
+*-------------------------------------------------------------------------- */
+
+/** \addtogroup ATS_CMD_MCS_PLAY_2
+\{ */
+
+/**
+    Start a playback session with the provided usecase, calibration, and 
+    audio file. This provides the same functionality as ATS_CMD_MCS_PLAY 
+    except that it allows the client to apply calibration, tag config, and 
+    tag custom config data before starting the usecase.
+
+    See MCS_CMD_PLAY_2 in mcs_api.h for command/response input and output
+
+    \sa ATS_CMD_MCS_PLAY
+*/
+#define ATS_CMD_MCS_PLAY_2 ATS_MCS_CMD_ID(5)
+/** \} */ /* end_addtogroup ATS_CMD_MCS_PLAY_2 */
+
+/* ---------------------------------------------------------------------------
+* ATS_CMD_MCS_RECORD_2 Declarations and Documentation
+*-------------------------------------------------------------------------- */
+
+/** \addtogroup ATS_CMD_MCS_RECORD_2
+\{ */
+
+/**
+    Start a record session and save the output to the specified file using
+	the provided record usecase, duration, and calibration. This provides the 
+    same functionality as ATS_CMD_MCS_RECORD except that it allows the client
+    to apply calibration, tag config, and tag custom config data before
+
+    See MCS_CMD_REC_2 in mcs_api.h for command/response input and output
+
+    \sa ATS_CMD_MCS_RECORD
+*/
+#define ATS_CMD_MCS_RECORD_2 ATS_MCS_CMD_ID(6)
+/** \} */ /* end_addtogroup ATS_CMD_MCS_RECORD_2 */
+
+/* ---------------------------------------------------------------------------
+* ATS_CMD_MCS_MULTI_PLAY_REC Declarations and Documentation
+*-------------------------------------------------------------------------- */
+
+/** \addtogroup ATS_CMD_MCS_MULTI_PLAY_REC
+\{ */
+
+/**
+    Start the active playback, record, or playback-record session. Releases all
+    resources allocated to MCS.
+
+   See MCS_CMD_MULTI_PLAY_REC in mcs_api.h for command/response input and output
+
+    \sa ATS_CMD_MCS_PLAY_REC
+*/
+#define ATS_CMD_MCS_MULTI_PLAY_REC ATS_MCS_CMD_ID(7)
+/** \} */ /* end_addtogroup ATS_CMD_MCS_MULTI_PLAY_REC */
+
+/* ---------------------------------------------------------------------------
+* ATS_CMD_MCS_STOP_2 Declarations and Documentation
+*-------------------------------------------------------------------------- */
+
+/** \addtogroup ATS_CMD_MCS_STOP_2
+\{ */
+
+/**
+    Stop the active playback, record, or playback-record session. Releases all
+    resources allocated to MCS.
+
+    See MCS_CMD_STOP_2 mcs_api.h for command/response input and output
+
+    \sa ATS_CMD_MCS_STOP
+*/
+#define ATS_CMD_MCS_STOP_2 ATS_MCS_CMD_ID(8)
+/** \} */ /* end_addtogroup ATS_CMD_MCS_STOP_2 */
+
+/* ---------------------------------------------------------------------------
 * ATS_CMD_FTS_OPEN_FILE Declarations and Documentation
 *-------------------------------------------------------------------------- */
 
