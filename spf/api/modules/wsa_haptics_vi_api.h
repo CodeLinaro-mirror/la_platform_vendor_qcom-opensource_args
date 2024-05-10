@@ -266,12 +266,6 @@ struct param_id_haptics_vi_op_mode_param_t {
         @h2xmle_rangeList   {"Normal Running mode"=0;
                              "Calibration mode"=1;
                              "Factory Test Mode"=2} */
-
-   uint32_t th_r0t0_selection_flag[HAPTICS_MAX_OUT_CHAN]; // this flag determines which set of R0, T0 values the algorithm will use
-                                                          // (0: use calibrated R0, T0 value, 1: use safe R0, T0 value)
-    /**< @h2xmle_description {Specifies which set of R0, T0 values the algorithm will use. This field is valid only in
-                              Normal mode (operation_mode = 0).}
-         @h2xmle_rangeList   {"Use calibrated R0, T0 value"=0;"Use safe R0, T0 value"=1} */
 }
 
 #include "spf_end_pragma.h"
