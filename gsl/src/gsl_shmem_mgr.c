@@ -253,6 +253,7 @@ static int32_t gsl_shmem_handle_rsp(gpr_packet_t *rsp, uint32_t master_proc_id,
 			rsp);
 		switch (basic_rsp->opcode) {
 		case APM_CMD_SHARED_MEM_MAP_REGIONS:
+		case APM_CMD_SHARED_SATELLITE_MEM_MAP_REGIONS:
 		case APM_CMD_RSP_SHARED_SATELLITE_MEM_MAP_REGIONS:
 		case APM_CMD_SHARED_MEM_UNMAP_REGIONS:
 		case APM_CMD_SHARED_SATELLITE_MEM_UNMAP_REGIONS:
