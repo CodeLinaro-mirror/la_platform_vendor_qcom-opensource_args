@@ -71,7 +71,6 @@ ar_osal_mutex_t log_mutex;
 
 #define GSL_DYN_DL_RETRY_MS (500)
 #define GSL_DYN_DL_NUM_RETRIES 4
-#define GSL_DYN_DL_NUM_RETRIES_SSR 6
 
 
 struct gsl_rtgm_state_info {
@@ -1295,7 +1294,6 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 	struct gsl_graph *graph = NULL;
 	gsl_handle_t hdl = 0;
 	uint8_t i = 0;
-	uint8_t j = 0;
 
 	if (graph_handle == NULL)
 		return AR_EBADPARAM;
@@ -1318,17 +1316,8 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 		if (gsl_ctxt.spf_restart[i]) {
 			//handle master proc restarting
 			gsl_shmem_remap_pre_alloc(i);
-			/* retry for up to 3 seconds to help in cases
-			   where ADSP RPC thread not ready */
-			for (j = 0; j < GSL_DYN_DL_NUM_RETRIES_SSR; ++j) {
-				rc = gsl_do_load_bootup_dyn_modules(i, NULL);
-				if (rc) {
-					ar_osal_micro_sleep(GSL_TIMEOUT_US(GSL_DYN_DL_RETRY_MS));
-				} else {
-					gsl_ctxt.spf_restart[i] = FALSE;
-					break;
-				}
-			}
+			gsl_do_load_bootup_dyn_modules(i, NULL);
+			gsl_ctxt.spf_restart[i] = FALSE;
 		}
 	}
 	GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
