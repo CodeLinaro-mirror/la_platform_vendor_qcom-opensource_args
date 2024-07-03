@@ -88,7 +88,8 @@ int32_t ar_shmem_validate_sys_id(uint8_t num_sys_id, uint8_t *sys_id)
             AR_MODEM_DSP != sys_id[i] &&
             AR_SENSOR_DSP != sys_id[i] &&
             AR_COMPUTE_DSP != sys_id[i] &&
-            AR_APSS != sys_id[i])
+            AR_APSS != sys_id[i] &&
+            AR_APSS2 != sys_id[i])
         {
             status = AR_EBADPARAM;
             break;

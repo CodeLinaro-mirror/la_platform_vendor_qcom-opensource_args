@@ -43,6 +43,10 @@ extern "C" {
 * Used for Companion chip DSP (CC_DSP) sub system
 */
 #define AR_CC_DSP                    6
+/**
+* Used for APSS2 sub system
+*/
+#define AR_APSS2                     0xC
 
 /**
 * First sub system ID
@@ -51,7 +55,7 @@ extern "C" {
 /**
 * Last sub system ID
 */
-#define AR_SUB_SYS_ID_LAST     AR_CC_DSP
+#define AR_SUB_SYS_ID_LAST     AR_APSS2
 
 
 
