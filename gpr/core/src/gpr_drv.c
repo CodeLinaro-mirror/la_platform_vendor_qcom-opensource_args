@@ -489,7 +489,7 @@ static uint32_t gpr_drv_util_create_packet_pool_info_arrs(uint32_t              
 
 #ifndef DISABLE_DEINIT
 // Utility to destory the packet pool info arrays, called at the time of de-init
-static uint32_t gpr_drv_util_free_packet_pool_info_arrs()
+static uint32_t gpr_drv_util_free_packet_pool_info_arrs(void)
 {
    // Get the heap index in which the structures have been allocated
    gpr_heap_index_t gpr_heap_index = gpr_ctxt_struct_t.drv_heap_index;
@@ -1211,3 +1211,4 @@ uint32_t __gpr_cmd_get_gpr_packet_info_v2(uint32_t *num_packet_pools, gpr_packet
 
    return AR_EOK;
 }
+//end of file

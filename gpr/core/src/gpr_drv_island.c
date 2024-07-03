@@ -569,6 +569,7 @@ uint32_t __gpr_cmd_accept_command(gpr_packet_t *packet)
    send_args.src_port      = packet->dst_port;
    send_args.src_domain_id = packet->dst_domain_id;
    send_args.token         = packet->token;
+   send_args.client_data   = packet->client_data;
    send_args.opcode        = GPR_IBASIC_EVT_ACCEPTED;
    rsp.opcode              = packet->opcode;
    send_args.payload       = &rsp;
@@ -633,6 +634,7 @@ uint32_t __gpr_cmd_end_command(gpr_packet_t *packet, uint32_t status)
       alloc_args.src_port      = packet->dst_port;
       alloc_args.src_domain_id = packet->dst_domain_id;
       alloc_args.token         = packet->token;
+      alloc_args.client_data   = packet->client_data;
       alloc_args.opcode        = GPR_IBASIC_RSP_RESULT;
       alloc_args.ret_packet    = &rsp_pkt_ptr;
       alloc_args.heap_index    = gpr_heap_index;

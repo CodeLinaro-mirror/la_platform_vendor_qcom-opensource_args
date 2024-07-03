@@ -106,10 +106,10 @@ The platform wrapper provides control over the following aspects.
  */
 struct ipc_dl_t
 {
-   uint16_t domain_id;
+   uint16_t           domain_id;
    /**< Domain ID to establish communication with. */
 
-   ipc_dl_init_fn_t init_fn;
+   ipc_dl_init_fn_t   init_fn;
    /**< Initialization function in the IPC data link layer. */
 
    ipc_dl_deinit_fn_t deinit_fn;
@@ -148,16 +148,16 @@ The platform wrapper provides control over the following aspects.
  */
 struct ipc_dl_v2_t
 {
-   uint16_t domain_id;
+   uint16_t           domain_id;
    /**< Domain ID to establish communication with. */
 
-   ipc_dl_init_fn_t init_fn;
+   ipc_dl_init_fn_t   init_fn;
    /**< Initialization function in the IPC data link layer. */
 
    ipc_dl_deinit_fn_t deinit_fn;
    /**< Deinitialization function in the IPC data link layer. @newpagetable */
 
-   bool_t supports_shared_mem;
+   bool_t             supports_shared_mem;
    /**< Indicates availability of shared memory with the destination domain. */
 };
 

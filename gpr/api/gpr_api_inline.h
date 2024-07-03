@@ -396,6 +396,10 @@ uint32_t __gpr_cmd_get_gpr_packet_info_v2(uint32_t *num_packet_pools, gpr_packet
   to allocate free messages for sending.  If delivery fails, the caller must
   either try to resend the messages or abort-and-free the messages
 
+  @par Notes
+  The sender must always anticipate failures, even when this function returns no
+  errors. The #GPR_IBASIC_RSP_RESULT response messages are to be checked for
+  any error statuses that are returned.
   @par
   The sender can locally abort any remotely pending operations by implementing
   timeouts. The sender must still expect and handle receipt of response messages

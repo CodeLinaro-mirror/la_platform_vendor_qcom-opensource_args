@@ -60,7 +60,7 @@ static void gpr_free_dynamic_packet_raw(gpr_dynamic_packet_t *dynamic_packet)
    return;
 }
 
-static void gpr_free_dynamic_packet_list()
+static void gpr_free_dynamic_packet_list(void)
 {
    gpr_list_node_t * node = NULL;
 
@@ -152,7 +152,7 @@ GPR_INTERNAL uint32_t gpr_check_and_free_dynamic_packet(gpr_packet_t *packet)
    return AR_EOK;
 }
 
-GPR_INTERNAL uint32_t gpr_dynamic_packet_init()
+GPR_INTERNAL uint32_t gpr_dynamic_packet_init(void)
 {
    uint32_t result = AR_EOK;
 
@@ -169,7 +169,7 @@ GPR_INTERNAL uint32_t gpr_dynamic_packet_init()
    return result;
 }
 
-GPR_INTERNAL uint32_t gpr_dynamic_packet_deinit()
+GPR_INTERNAL uint32_t gpr_dynamic_packet_deinit(void)
 {
    if (gpr_dynamic_packet_init_done)
    {

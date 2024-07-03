@@ -22,12 +22,12 @@ GPR_INTERNAL uint32_t gpr_check_and_free_dynamic_packet(gpr_packet_t *packet)
    return AR_EFAILED;
 }
 
-GPR_INTERNAL uint32_t gpr_dynamic_packet_init()
+GPR_INTERNAL uint32_t gpr_dynamic_packet_init(void)
 {
    return AR_EOK;
 }
 
-GPR_INTERNAL uint32_t gpr_dynamic_packet_deinit()
+GPR_INTERNAL uint32_t gpr_dynamic_packet_deinit(void)
 {
    return AR_EOK;
 }

@@ -23,9 +23,9 @@ GPR_INTERNAL uint32_t gpr_allocate_dynamic_packet(gpr_packet_t **packet,
 
 GPR_INTERNAL uint32_t gpr_check_and_free_dynamic_packet(gpr_packet_t *packet);
 
-GPR_INTERNAL uint32_t gpr_dynamic_packet_init();
+GPR_INTERNAL uint32_t gpr_dynamic_packet_init(void);
 
-GPR_INTERNAL uint32_t gpr_dynamic_packet_deinit();
+GPR_INTERNAL uint32_t gpr_dynamic_packet_deinit(void);
 
 #ifdef __cplusplus
 }
