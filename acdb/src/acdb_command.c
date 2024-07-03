@@ -31,7 +31,7 @@
 * Preprocessor Definitions and Constants
 *--------------------------------------------------------------------------- */
 #define ACDB_SOFTWARE_VERSION_MAJOR 0x00000001
-#define ACDB_SOFTWARE_VERSION_MINOR 0x00000025
+#define ACDB_SOFTWARE_VERSION_MINOR 0x00000026
 #define ACDB_SOFTWARE_VERSION_REVISION 0x00000000
 #define ACDB_SOFTWARE_VERSION_CPLINFO 0x00000000
 
