@@ -122,6 +122,17 @@ if ( rc )
 GPR_EXTERNAL uint32_t gpr_init(void);
 
 /**
+  To initialize GPR with particular domain.
+
+  @return
+  #AR_EOK -- When successful.
+
+  @dependencies
+  None.
+*/
+GPR_EXTERNAL uint32_t gpr_init_domain(uint32_t domain_id);
+
+/**
   Performs external deinitialization of the GPR infrastructure.
 
   Each supported domain calls this function once during system shutdown or

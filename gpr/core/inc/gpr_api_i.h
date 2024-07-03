@@ -47,6 +47,18 @@ extern "C" {
 GPR_EXTERNAL uint32_t gpr_drv_init(void);
 
 /**
+  Called from gpr_init_domain(domain_id) to GPR infrastructure for
+  particular domain.
+
+  @return
+  #AR_EOK -- When successful.
+
+  @dependencies
+  None.
+*/
+GPR_EXTERNAL uint32_t gpr_drv_init_domain(uint32_t domain_id);
+
+/**
   Called from gpr_deinit() to deinitialize the GPR infrastructure.
 
   @return
