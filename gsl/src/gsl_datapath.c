@@ -2273,13 +2273,11 @@ exit:
 int32_t gsl_handle_media_format_buff_done(struct gsl_data_path_info *dp_info,
 	gpr_packet_t *packet)
 {
-	struct spf_cmd_basic_rsp *basic_rsp;
 	uint32_t buff_idx;
 	int32_t status = AR_EOK;
 
 	REMOVE_DEBUG_TOKEN(packet->token);
 	buff_idx = packet->token;
-	basic_rsp = GPR_PKT_GET_PAYLOAD(struct spf_cmd_basic_rsp, packet);
 	gsl_mark_buffer_as_avail(dp_info, buff_idx);
 	gsl_signal_set(&dp_info->dp_signal, GSL_SIG_EVENT_MASK_SPF_RSP, status,
 		NULL);
