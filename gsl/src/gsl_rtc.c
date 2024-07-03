@@ -237,7 +237,7 @@ int32_t gsl_rtc_graph_get_non_persist_data(struct gsl_graph *graph,
 {
 	int32_t rc = AR_EOK;
 	apm_cmd_header_t *cmd_header;
-	struct gpr_packet_t *rsp_pkt = NULL;
+	gpr_packet_t *rsp_pkt = NULL;
 	gsl_msg_t gsl_msg;
 	struct apm_cmd_rsp_get_cfg_t *get_cfg_rsp;
 	bool_t is_shmem_supported = TRUE;
@@ -357,7 +357,7 @@ int32_t gsl_rtc_graph_set_persist_data(struct gsl_graph *graph,
 	int32_t rc = AR_EOK;
 	struct apm_cmd_header_t *cmd_header;
 	struct gsl_subgraph *sg;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	uint64_t cal_paddr_w_offset = 0;
 
 	if (!graph)

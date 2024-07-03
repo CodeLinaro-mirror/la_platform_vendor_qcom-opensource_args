@@ -718,7 +718,7 @@ static int32_t gsl_dp_configure_pull_push_on_spf(
 	struct sh_mem_pull_push_mode_cfg_t *pull_push_cfg = NULL;
 	uint8_t *spf_cmd;
 	uint32_t spf_cmd_sz = 0;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 
 	/* configure pull_push mode buffers on spf */
 	spf_cmd_sz = GSL_ALIGN_8BYTE(sizeof(*apm_hdr) + sizeof(*param_hdr) +
@@ -1115,7 +1115,7 @@ static int32_t gsl_dp_write_shmem(struct gsl_data_path_info *dp_info,
 	media_format_t *media_fmt;
 	int32_t rc;
 	uint64_t tmp;
-	gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	uint32_t gpr_pld_size;
 	uint32_t opcode = DATA_CMD_WR_SH_MEM_EP_DATA_BUFFER_V2;
 
@@ -1213,7 +1213,7 @@ static int32_t gsl_dp_read_shmem(struct gsl_data_path_info *dp_info,
 	data_cmd_rd_sh_mem_ep_data_buffer_v2_t *read_cmd;
 	int32_t rc;
 	uint64_t tmp;
-	gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 
 	rc = gsl_allocate_gpr_packet(DATA_CMD_RD_SH_MEM_EP_DATA_BUFFER_V2,
 		dp_info->src_port, dp_info->miid,
@@ -1908,6 +1908,7 @@ int32_t gsl_dp_config_data_path(struct gsl_data_path_info *dp_info,
 	/*
 	 * Used to determine whether or not metadata will be in-band or out-of-band
 	 */
+	gsl_memset(&gpr_pkt_info, 0, sizeof(gpr_pkt_info));
 	rc = __gpr_cmd_get_gpr_packet_info(&gpr_pkt_info);
 	max_rw_cmd_sz = sizeof(gpr_packet_t) +
 		sizeof(data_cmd_rd_sh_mem_ep_data_buffer_v2_t) + cfg->max_metadata_size;

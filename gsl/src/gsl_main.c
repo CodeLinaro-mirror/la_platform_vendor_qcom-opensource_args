@@ -72,6 +72,7 @@ ar_osal_mutex_t log_mutex;
 #define GSL_DYN_DL_RETRY_MS (500)
 #define GSL_DYN_DL_NUM_RETRIES 4
 
+#define GSL_SS_RETRY_MS (10)
 
 struct gsl_rtgm_state_info {
 
@@ -707,7 +708,7 @@ static int32_t gsl_do_spf_readiness_check(
 	uint32_t i = 0, event_flags = 0, spf_status = 0;
 	gpr_cmd_alloc_ext_t gpr_args;
 	int32_t rc = AR_EOK;
-	gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 
 	gpr_args.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
 	gpr_args.dst_domain_id = (uint8_t) proc_id;
@@ -775,7 +776,7 @@ static int32_t gsl_send_spf_satellite_info(uint32_t proc_id,
 	uint32_t i = 0, j = 0;
 	gpr_cmd_alloc_ext_t gpr_args;
 	int32_t rc = AR_EOK;
-	gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	apm_cmd_header_t *apm_hdr;
 	apm_param_id_satellite_pd_info_t *sat_pd_info;
 	apm_module_param_data_t *param_hdr;
@@ -1296,6 +1297,7 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
     uint32_t supported_ss_mask = 0;
     bool_t is_shmem_supported = TRUE;
     uint8_t i = 0;
+	int32_t ss_retry_count = 10;
 
 	if (graph_handle == NULL)
 		return AR_EBADPARAM;
@@ -1321,7 +1323,7 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
             // handle master proc restarting
             gsl_shmem_remap_pre_alloc(i);
             gsl_mdf_utils_get_supported_ss_info_from_master_proc(i, &supported_ss_mask);
-			// open_close_lock will be acquired insides
+            // open_close_lock will be acquired insides
             rc = gsl_send_spf_satellite_info(i, supported_ss_mask);
             if (rc) {
                 GSL_ERR("gsl_send_spf_satellite_info failed for master_proc %d rc %d", i, rc);
@@ -1349,28 +1351,37 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
         GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
     }
 
-	/*
-	 * Initialize graph instance and register to GPR to
-	 * receive/send commands/events/data from spf
-	 * State is updated under lock to sync with SSR
-	 */
-	GSL_MUTEX_LOCK(gsl_ctxt.graph_hdl_lock);
-	rc = gsl_graph_init(graph);
-	GSL_MUTEX_UNLOCK(gsl_ctxt.graph_hdl_lock);
-	if (rc) {
-		GSL_ERR("graph_init failed %d", rc);
-		release_graph_handle(hdl);
-		goto cleanup;
-	}
+    /*
+     * Initialize graph instance and register to GPR to
+     * receive/send commands/events/data from spf
+     * State is updated under lock to sync with SSR
+     */
+    GSL_MUTEX_LOCK(gsl_ctxt.graph_hdl_lock);
+    rc = gsl_graph_init(graph);
+    GSL_MUTEX_UNLOCK(gsl_ctxt.graph_hdl_lock);
+    if (rc) {
+        GSL_ERR("graph_init failed %d", rc);
+        goto release_handle;
+    }
 
-	rc = gsl_graph_open(graph, graph_key_vect, cal_key_vect,
-		gsl_ctxt.open_close_lock);
-	if (rc) {
-		/* @TODO log error */
-		release_graph_handle(hdl);
-		goto deinit;
-	}
-	*graph_handle = hdl;
+    while (ss_retry_count--) {
+        rc = gsl_graph_open(graph, graph_key_vect, cal_key_vect, gsl_ctxt.open_close_lock);
+        if (AR_ESUBSYSRESET == rc) {
+            GSL_INFO("wait subsystem online, remaining retry count: %d", ss_retry_count);
+            ar_osal_micro_sleep(GSL_TIMEOUT_US(GSL_SS_RETRY_MS));
+            continue;
+        } else if (rc) {
+            GSL_ERR("graph_open failed %d", rc);
+            goto deinit;
+        }
+        break;
+    }
+    // If it comes out from while() with a AR_ESUBSYSRESET even after ss_retry_count's retry,
+    // we should goto deinit.
+    if (AR_ESUBSYSRESET == rc)
+        goto deinit;
+
+    *graph_handle = hdl;
 
 	if (gsl_ctxt.rtc_conn_active)
 		graph->rtc_conn_active = true;
@@ -1381,6 +1392,8 @@ deinit:
 	GSL_MUTEX_LOCK(gsl_ctxt.graph_hdl_lock);
 	gsl_graph_deinit(graph);
 	GSL_MUTEX_UNLOCK(gsl_ctxt.graph_hdl_lock);
+release_handle:
+	release_graph_handle(hdl);
 cleanup:
 	gsl_mem_free(graph);
 	GSL_PKT_LOG_CLOSE();

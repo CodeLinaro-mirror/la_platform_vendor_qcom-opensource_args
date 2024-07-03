@@ -145,7 +145,7 @@ static int32_t gsl_command_hw_rsc_config(uint32_t miid,
 	uint32_t cmd_payload_size = 0;
 	struct apm_cmd_header_t *cmd_header;
 	uint8_t *cmd_payload, *module_param;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 
 	gsl_hw_rsc_ctxt.rsp_buff = NULL;	//not used here, so don't write to it.
 	GSL_MUTEX_LOCK(gsl_hw_rsc_ctxt.rsc_lock);
@@ -192,7 +192,7 @@ static int32_t gsl_command_hw_rsc_custom_config(const uint8_t *payload,
 	int32_t rc = AR_EOK;
 	struct apm_cmd_header_t *cmd_header;
 	uint8_t *cmd_payload, *module_param;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 
 	GSL_MUTEX_LOCK(gsl_hw_rsc_ctxt.rsc_lock);
 	rc = gsl_allocate_gpr_packet(cmd, GSL_HW_RSC_SRC_PORT,

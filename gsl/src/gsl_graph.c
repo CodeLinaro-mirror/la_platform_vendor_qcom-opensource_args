@@ -429,7 +429,7 @@ static int32_t gsl_apm_get_config_inband(struct gsl_graph *graph,
 	uint8_t *payload, uint32_t *payload_size, uint32_t dst_port)
 {
 	int32_t rc = AR_EOK;
-	struct gpr_packet_t *rsp_pkt = NULL;
+	gpr_packet_t *rsp_pkt = NULL;
 	struct apm_cmd_rsp_get_cfg_t *get_cfg_rsp;
 	apm_module_param_data_t *param_data = (apm_module_param_data_t *)payload;
 
@@ -487,7 +487,7 @@ static int32_t gsl_apm_config_oob(struct gsl_graph *graph,
 	struct ar_data_log_submit_info_t info;
 	struct ar_data_log_generic_pkt_info_t pkt_info;
 	struct apm_cmd_rsp_get_cfg_t *get_cfg_rsp;
-	struct gpr_packet_t *rsp_pkt = NULL;
+	gpr_packet_t *rsp_pkt = NULL;
 	apm_module_param_data_t *param_data = (apm_module_param_data_t *)payload;
 
 	rc = gsl_msg_alloc(opcode, graph->src_port, dst_port, sizeof(*cmd_header),
@@ -796,7 +796,7 @@ static int32_t gsl_graph_send_persist_cal(struct gsl_graph *graph,
 	struct apm_cmd_header_t *cmd_header;
 	struct gsl_subgraph *sg = NULL;
 	uint32_t i;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	uint64_t paddr_w_offset = 0;
 	AcdbUintList sg_cma_status_list;
 	AcdbHwAccelSubgraphInfoReq cma_sg_info_req;
@@ -1090,7 +1090,7 @@ static int32_t gsl_graph_send_global_persist_cal(struct gsl_graph *graph,
 	uint32_t i, j;
 	uint32_t gpc_id;
 	struct apm_cmd_header_t *cmd_header;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	struct gsl_glbl_persist_cal_iid_list *cal_iid_lists;
 	bool_t is_shmem_supported = TRUE;
 
@@ -1736,7 +1736,7 @@ int32_t gsl_graph_set_tagged_custom_config_persist(struct gsl_graph *graph,
 	struct apm_cmd_header_t *apm_hdr;
 	struct gsl_subgraph **sg_objs = NULL;
 	uint32_t num_sg_objs = 0;
-	gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	bool_t is_shmem_supported = TRUE;
 
 	rc = __gpr_cmd_is_shared_mem_supported(graph->proc_id, &is_shmem_supported);
@@ -2316,7 +2316,7 @@ static int32_t gsl_graph_close_single_gkv(struct gsl_graph *graph,
 	struct gsl_sgobj_list sg_obj_list;
 	uint32_t total_num_sgs_to_close = 0;
 	struct gsl_glbl_persist_cal *tmp_gpcal;
-	struct gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	struct apm_cmd_header_t *cmd_header;
 	/* holds the number of pruned sgs plus number of force close sgs */
 

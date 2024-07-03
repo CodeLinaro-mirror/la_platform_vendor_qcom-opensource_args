@@ -292,7 +292,7 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 	gpr_cmd_alloc_ext_t gpr_args;
 	uint32_t tmp_spf_ss_mask, spf_ss_mask_sans_adsp;
 	uint32_t sys_id = AR_MODEM_DSP;
-	gpr_packet_t *send_pkt, *rsp_pkt = NULL;
+	gpr_packet_t *send_pkt = NULL, *rsp_pkt = NULL;
 	uint8_t cma_client_data = 0;
 	uint32_t master_proc_id = page->master_proc;
 
@@ -465,7 +465,7 @@ static int32_t gsl_shmem_unmap_page_from_spf(struct gsl_shmem_page *page,
 	int32_t rc = AR_EOK;
 	uint32_t tmp_spf_ss_mask, spf_ss_mask_sans_adsp;
 	uint32_t sys_id = AR_MODEM_DSP;
-	gpr_packet_t *send_pkt, *rsp_pkt = NULL;
+	gpr_packet_t *send_pkt = NULL, *rsp_pkt = NULL;
 	uint8_t cma_client_data = 0;
 	uint32_t master_proc_id = page->master_proc;
 

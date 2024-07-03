@@ -178,7 +178,7 @@ static int32_t gsl_do_register_dynamic_modules(uint32_t master_proc,
 	AcdbBlob acdb_blob_rsp;
 	apm_cmd_header_t *apm_hdr;
 	uint64_t tmp_spf_addr = 0;
-	gpr_packet_t *send_pkt;
+	gpr_packet_t *send_pkt = NULL;
 	uint32_t spf_opcode = AMDB_CMD_REGISTER_MODULES;
 	uint32_t acdb_cmdid = ACDB_CMD_GET_AMDB_REGISTRATION_DATA_V2;
 	uint32_t found_proc_ids = 0x0;
@@ -311,7 +311,7 @@ int32_t gsl_do_load_bootup_dyn_modules(uint32_t master_proc,
 	AcdbBlob acdb_blob_rsp;
 	apm_cmd_header_t *apm_hdr;
 	uint8_t *spf_cmd = NULL;
-	struct gpr_packet_t *p_rsp_pkt = NULL, *send_pkt;
+	gpr_packet_t *p_rsp_pkt = NULL, *send_pkt = NULL;
 	struct amdb_module_load_unload_t *load_cmd;
 
 	if (gsl_dyn_mod_mgr_ctxt[master_proc] == NULL)
@@ -429,7 +429,7 @@ int32_t gsl_do_unload_bootup_dyn_modules(uint32_t master_proc,
 	int32_t first_rc = AR_EOK, rc = AR_EOK;
 	uint32_t proc_id = AR_SUB_SYS_ID_FIRST, load_rsp_pld_sz = 0;
 	struct amdb_module_load_unload_t *load_rsp_pld = NULL;
-	struct gpr_packet_t *send_pkt = NULL;
+	gpr_packet_t *send_pkt = NULL;
 	apm_cmd_header_t *apm_hdr = NULL;
 
 	if (gsl_dyn_mod_mgr_ctxt[master_proc] == NULL)
