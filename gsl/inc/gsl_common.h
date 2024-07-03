@@ -41,6 +41,12 @@
 #define REMOVE_DEBUG_TOKEN(x) (x) = ((x) & ~DEBUG_TOKEN_MASK)
 
 #if !defined(__GSL_GPR_STUB__) && (defined(_WIN32) || defined(_WIN64)) \
+	&& !defined(_KERNEL_MODE) && defined(ARSPF_WIN_PORTING)
+	/** WIN32/64 - SPF PORTING Timeout can be less than COSIM mode */
+#define GSL_SPF_TIMEOUT_MS  ((3)*(1000))
+#define GSL_GRAPH_OPEN_TIMEOUT_MS  ((3)*(1000))
+#define GSL_SPF_READ_WRITE_TIMEOUT_MS  ((3)*(1000))
+#elif !defined(__GSL_GPR_STUB__) && (defined(_WIN32) || defined(_WIN64)) \
 	&& !defined(_KERNEL_MODE)
 /** WIN32/64 COSIM Mode requires longer delays(30 min) */
 #define GSL_SPF_TIMEOUT_MS  ((1800)*(1000))
