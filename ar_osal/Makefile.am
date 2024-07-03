@@ -33,11 +33,17 @@ osal_c_sources = ./src/linux/ar_osal_file_io.c \
                  ./src/linux/ar_osal_signal.c \
                  ./src/linux/ar_osal_sleep.c \
                  ./src/linux/ar_osal_string.c \
-                 ./src/linux/ar_osal_stub_log_pkt_op.c \
                  ./src/linux/ar_osal_thread.c \
                  ./src/linux/ar_osal_timer.c \
 		 ./src/linux/qcom/ar_osal_shmem_db.c \
 		  ./src/linux/qcom/ar_osal_servreg.c
+
+if USE_DUMMY_DIAG
+osal_c_sources += ./src/linux/ar_osal_stub_log_pkt_op.c
+else
+osal_c_sources += ./src/linux/qcom/ar_osal_log_pkt_op.c
+endif
+
 
 if ARGS_USE_SYSLOG
 AM_CFLAGS += -DAR_OSAL_USE_SYSLOG

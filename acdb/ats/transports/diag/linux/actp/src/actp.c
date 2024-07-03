@@ -37,7 +37,7 @@
 #include "ats_common.h"
 
 //Defing diag functions for compilation on ottp
-#if defined(ATS_OTTP) || defined(_DEVICE_SIM)
+#if defined(ATS_OTTP) || defined(_DEVICE_SIM) || defined(ATS_USES_DUMMY_DIAG)
 void diagpkt_commit(void *ptr) { __UNREFERENCED_PARAM(ptr); }
 diagpkt_subsys_cmd_code_type diagpkt_subsys_get_cmd_code(void *ptr) { __UNREFERENCED_PARAM(ptr); return 0; }
 
