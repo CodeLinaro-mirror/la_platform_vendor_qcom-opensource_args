@@ -1,5 +1,5 @@
 /**
- * \file gpr_drv.h
+ * \file gpr_drv.c
  * \brief
  *  	This file contains GPR driver implementation
  *
@@ -48,6 +48,7 @@ gpr_proc_info_t gpr_proc_info[GPR_PL_NUM_TOTAL_DOMAINS_V] = {
                                                                { GPR_IDS_DOMAIN_ID_RESERVED_3, "res3" },
                                                                { GPR_IDS_DOMAIN_ID_GDSP0_V, "gpdsp0" },
                                                                { GPR_IDS_DOMAIN_ID_GDSP1_V, "gpdsp1" },
+                                                               { GPR_IDS_DOMAIN_ID_APPS2_V, "adsp" },
                                                             };
 // clang-format on
 

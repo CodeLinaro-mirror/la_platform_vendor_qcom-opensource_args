@@ -62,8 +62,11 @@ not Globally Unique IDs (GUIDS).
 /** Generic chip DSP (gDSP1) domain */
 #define GPR_IDS_DOMAIN_ID_GDSP1_V     0xB
 
+/** SPF-on-ARM HLOS (APPS2) domain */
+#define GPR_IDS_DOMAIN_ID_APPS2_V     0xC
+ 
 /** Highest domain ID. @hideinitializer */
-#define GPR_PL_MAX_DOMAIN_ID_V AR_NON_GUID( GPR_IDS_DOMAIN_ID_GDSP1_V )
+#define GPR_PL_MAX_DOMAIN_ID_V AR_NON_GUID( GPR_IDS_DOMAIN_ID_APPS2_V )
 
 /** Total number of domains. @hideinitializer */
 #define GPR_PL_NUM_TOTAL_DOMAINS_V ( GPR_PL_MAX_DOMAIN_ID_V + 1 )
