@@ -35,7 +35,7 @@ extern "C"
 #define ACDB_SOFTWARE_VERSION_MAJOR 0x00000001
 
 /**< The ACDB Software Minor Version */
-#define ACDB_SOFTWARE_VERSION_MINOR 0x00000026
+#define ACDB_SOFTWARE_VERSION_MINOR 0x00000027
 
 /**< The ACDB Software Revision */
 #define ACDB_SOFTWARE_VERSION_REVISION 0x00000000
@@ -2162,6 +2162,81 @@ struct _acdb_string_t
 ;
 
 /** @} */ /* end_addtogroup ACDB_CMD_GET_GRAPH_ALIAS */
+
+/* ---------------------------------------------------------------------------
+* ACDB_CMD_GET_PROC_TAGGED_MODULES Declarations and Documentation
+*-------------------------------------------------------------------------- */
+/** @addtogroup ACDB_CMD_GET_PROC_TAGGED_MODULES
+
+@{ */
+
+/**
+	  Retrieves a list of tagged modules orderd by processor domain ID.
+
+	  @param[in] cmd_id
+	  Command ID is ACDB_CMD_GET_PROC_TAGGED_MODULES.
+	  @param[in] cmd
+	  This is a pointer to AcdbGetProcTaggedModulesReq.
+	  @param[in] cmd_size
+	  This is the size of AcdbGetProcTaggedModulesReq.
+	  @param[out] rsp
+	  This is a pointer to AcdbGetProcTaggedModulesRsp.
+	  @param[in] rsp_size
+	  This is the size of AcdbGetProcTaggedModulesRsp.
+
+	  @return
+		- AR_EOK -- Command executed successfully.
+		- AR_EBADPARAM -- Invalid input parameters were provided.
+		- AR_EFAILED -- Command execution failed.
+
+	  @sa
+	  acdb_ioctl
+	  */
+#define ACDB_CMD_GET_PROC_TAGGED_MODULES	 ACDB_CMD_ID(34)
+
+/**< Request structure for getting modules tagged with tag_id under the specified subgraphs */
+typedef struct _acdb_get_proc_tagged_modules_req_t AcdbGetProcTaggedModulesReq;
+#include "acdb_begin_pack.h"
+struct _acdb_get_proc_tagged_modules_req_t {
+	/**< Number of Subgraphs*/
+	uint32_t num_sg_ids;
+	/**< Subgraph ID list*/
+	uint32_t* sg_ids;
+	/**< The tag to search for */
+	uint32_t tag_id;
+}
+#include "acdb_end_pack.h"
+;
+
+/**< Maps tagged modules to a processor domain */
+typedef struct _acdb_proc_tagged_modules_t AcdbProcTaggedModules;
+#include "acdb_begin_pack.h"
+struct _acdb_proc_tagged_modules_t {
+	uint32_t proc_domain_id;
+	/**< Number of tagged modules*/
+	uint32_t num_tagged_mids;
+	/**< Pointer to array of tagged modules*/
+	AcdbModuleInstance tagged_mid_list[0];
+}
+#include "acdb_end_pack.h"
+;
+
+/**< Response struture containing a mapping of tagged modules to processor domain ID */
+typedef struct _acdb_get_proc_tagged_modules_rsp_t AcdbGetProcTaggedModulesRsp;
+#include "acdb_begin_pack.h"
+struct _acdb_get_proc_tagged_modules_rsp_t {
+	/**< Number of tagged modules*/
+	uint32_t num_procs;
+	/**< size of the proc_tagged_module_list */
+	uint32_t list_size;
+	/**< A pointer to contiguous block of memory 
+	containing tagged module ID and IID ordered by processor domain */
+	AcdbProcTaggedModules *proc_tagged_module_list;
+}
+#include "acdb_end_pack.h"
+;
+
+/** @} */ /* end_addtogroup ACDB_CMD_GET_PROC_TAGGED_MODULES */
 
 /* ---------------------------------------------------------------------------
 * Public Function API Definitions and Documentation

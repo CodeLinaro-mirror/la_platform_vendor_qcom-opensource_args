@@ -28,8 +28,9 @@
 
 #ifdef __cplusplus
 extern "C"{
-#endif
+#endif /*__cplusplus*/
 
+#ifdef ATS_TRANSPORT_TCPIP
     typedef struct tcpip_cmd_server_context {
         void(*ats_cb)(uint8_t* req, uint32_t req_len, uint8_t** resp, uint32_t* resp_len);
     } tcpip_cmd_server_context;
@@ -92,9 +93,13 @@ int32_t tcpip_cmd_server_deinit(void);
 	  payload_size: Size of the payload
 */
 int32_t tcpip_cmd_server_send_rtm_log_data(const uint8_t* sendbuf, uint32_t payload_size);
-#endif
+#endif /*FEATURE_ATS_PUSH*/
+
+#endif /*ATS_TRANSPORT_TCPIP*/
+
 #ifdef __cplusplus
 }
-#endif
+#endif /*__cplusplus*/
+
 #endif /*_TCPIP_CMD_SERVER_API_H_*/
 

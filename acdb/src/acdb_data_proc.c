@@ -136,42 +136,18 @@ void FreeCalData(AcdbDeltaModuleCalData **caldata)
 	*caldata = NULL;
 }
 
-void FreeSubgraphIIDMap(AcdbSubgraphPdmMap* sg_iid_map)
+int32_t DataProcGetSubgraphProcIidMap(uint32_t subgraph_id, AcdbSubgraphPdmMap* subgraph_proc_iid_map)
 {
-    if (IsNull(sg_iid_map)) return;
-
-    if (!IsNull(sg_iid_map) &&
-        !IsNull(sg_iid_map->proc_info))
-    {
-        ACDB_FREE(sg_iid_map->proc_info);
-        sg_iid_map->proc_info = NULL;
-    }
-
-    ACDB_FREE(sg_iid_map);
-}
-
-/**
-* \brief
-* Retrieve the mapping between a subgraph and its modules from the ACDB DATA files
-* Caller is responsible for freeing memory to sg_iid_map
-*
-* \param[in] subgraph_id: The subgraph to search for
-* \param[out] sg_iid_map: The map parsed from the data files
-* \return 0 on Success, non-zero on failure
-*/
-int32_t GetSubgraphIIDMap(uint32_t subgraph_id, AcdbSubgraphPdmMap **sg_iid_map)
-{
-	uint32_t status = AR_EOK;
-	uint32_t offset = 0;
+    uint32_t status = AR_EOK;
+    uint32_t offset = 0;
     ChunkInfo ci = { 0 };
-	uint32_t subgraph_count = 0;
-	uint32_t found_count = 0;
+    uint32_t subgraph_count = 0;
     //Header: <Subgraph ID, Processor Count, Size>
     size_t sz_subgraph_obj_header = 3 * sizeof(uint32_t);
 
-    if (IsNull(sg_iid_map))
+    if (IsNull(subgraph_proc_iid_map))
     {
-        ACDB_ERR("Error[%d]: Subgraph Instance ID Map is null",
+        ACDB_ERR("Error[%d]: subgraph proc domain module map parameter is null",
             AR_EBADPARAM);
         return AR_EBADPARAM;
     }
@@ -188,65 +164,40 @@ int32_t GetSubgraphIIDMap(uint32_t subgraph_id, AcdbSubgraphPdmMap **sg_iid_map)
         return status;
     }
 
-	for (uint32_t i = 0; i < subgraph_count; i++)
-	{
-        if (IsNull(*sg_iid_map))
-        {
-            *sg_iid_map = ACDB_MALLOC(AcdbSubgraphPdmMap, 1);
-            if (*sg_iid_map == NULL)
-                return AR_ENOMEMORY;
-            memset(*sg_iid_map, 0, sizeof(AcdbSubgraphPdmMap));
-        }
-
-        status = FileManReadBuffer(*sg_iid_map, sz_subgraph_obj_header, &offset);
+    for (uint32_t i = 0; i < subgraph_count; i++)
+    {
+        status = FileManReadBuffer((void*)subgraph_proc_iid_map, sz_subgraph_obj_header, &offset);
         if (AR_FAILED(status))
         {
-            ACDB_ERR("Error[%d]: Failed to read subgraph count", status);
-            goto end;
+            ACDB_ERR("Error[%d]: Failed to read subgraph proc domain map "
+                "header for subgraph 0x%x", status, subgraph_id);
+            return AR_EFAILED;
         }
 
-		if (subgraph_id == (*sg_iid_map)->subgraph_id)
-		{
-            if ((*sg_iid_map)->size <= 0) continue;
+        if (subgraph_id != subgraph_proc_iid_map->subgraph_id)
+        {
+            offset += subgraph_proc_iid_map->size;
+            status = AR_ENOTEXIST;
+            continue;
+        }
 
-            (*sg_iid_map)->proc_info = ACDB_MALLOC(
-                AcdbProcDomainModuleList, (*sg_iid_map)->size);
+        status = FileManGetFilePointer2((void**)&subgraph_proc_iid_map->proc_info, offset);
+        if (AR_FAILED(status))
+        {
+            ACDB_ERR("Error[%d]: Unable to get pointer to proc domain module list info", status);
+            return AR_EFAILED;
+        }
 
-            if (IsNull((*sg_iid_map)->proc_info))
-            {
-                status = AR_ENOMEMORY;
-                goto end;
-            }
-
-            //ACDB_DBG("Processor info Size(%d)", (*sg_iid_map)->size);
-
-            status = FileManReadBuffer((*sg_iid_map)->proc_info,
-                (*sg_iid_map)->size, &offset);
-            if (AR_FAILED(status))
-            {
-                ACDB_ERR("Error[%d]: Failed to read processor info", status);
-                goto end;
-            }
-
-			found_count++;
-			break;
-		}
-		else
-		{
-			offset += (*sg_iid_map)->size;
-		}
-	}
-
-    end:
-    status = (0 == found_count)? AR_ENOTEXIST: status;
+        status = AR_EOK;
+        break;
+    }
 
     if (AR_FAILED(status))
     {
-        FreeSubgraphIIDMap(*sg_iid_map);
-        *sg_iid_map = NULL;
+        ar_mem_set((void*)subgraph_proc_iid_map, 0, sizeof(AcdbSubgraphPdmMap));
     }
 
-	return status;
+    return status;
 }
 
 /**
@@ -259,33 +210,60 @@ int32_t GetSubgraphIIDMap(uint32_t subgraph_id, AcdbSubgraphPdmMap **sg_iid_map)
 */
 bool_t DoesSubgraphContainModule(uint32_t subgraph_id, uint32_t module_iid, int32_t *status)
 {
-    AcdbSubgraphPdmMap *sg_iid_map = NULL;
+    uint32_t offset = 0;
+    AcdbProcDomainModuleList* proc_domain_module_list = NULL;
+    AcdbModuleInstance* module_instance_list = NULL;
 
-    bool_t found = FALSE;
+    AcdbSubgraphPdmMap subgraph_proc_domain_map = { 0 };
 
-    *status = GetSubgraphIIDMap(subgraph_id, &sg_iid_map);
+    *status = DataProcGetSubgraphProcIidMap(subgraph_id, &subgraph_proc_domain_map);
+    if (AR_EOK != *status) return FALSE;
 
-    if (AR_EOK != *status) return found;
-
-    for (uint32_t i = 0; i < (sg_iid_map)->proc_count; i++)
+    while (offset < subgraph_proc_domain_map.size)
     {
-        for (uint32_t j = 0; j < (sg_iid_map)->proc_info[i].module_count; j++)
+        proc_domain_module_list = (AcdbProcDomainModuleList*)((uint8_t*)subgraph_proc_domain_map.proc_info + offset);
+        offset += sizeof(AcdbProcDomainModuleList)
+            + proc_domain_module_list->module_count * sizeof(AcdbModuleInstance);
+
+        module_instance_list = (AcdbModuleInstance*)((uint8_t*)&proc_domain_module_list->module_count + sizeof(uint32_t));
+
+        for (uint32_t i = 0; i < proc_domain_module_list->module_count; i++)
         {
-            if (module_iid == (sg_iid_map)->proc_info[i].module_list[j].mid_iid)
+            if (module_iid == module_instance_list[i].mid_iid)
             {
-                found = TRUE;
-                break;
+                return TRUE;
             }
-        }
-        if (found)
-        {
-            break;
         }
     }
 
-    FreeSubgraphIIDMap(sg_iid_map);
+    return FALSE;
+}
 
-    return found;
+int32_t DataProcGetProcDomainForModule(AcdbSubgraphPdmMap* subgraph_proc_domain_map, uint32_t module_iid, uint32_t* proc_domain_id)
+{
+    uint32_t offset = 0;
+    AcdbProcDomainModuleList* proc_domain_module_list = NULL;
+    AcdbModuleInstance* module_instance_list = NULL;
+
+    while (offset < subgraph_proc_domain_map->size)
+    {
+        proc_domain_module_list = (AcdbProcDomainModuleList*)((uint8_t*)subgraph_proc_domain_map->proc_info + offset);
+        offset += sizeof(AcdbProcDomainModuleList)
+            + proc_domain_module_list->module_count * sizeof(AcdbModuleInstance);
+
+        module_instance_list = (AcdbModuleInstance*)((uint8_t*)&proc_domain_module_list->module_count + sizeof(uint32_t));
+
+        for (uint32_t i = 0; i < proc_domain_module_list->module_count; i++)
+        {
+            if (module_iid == module_instance_list[i].mid_iid)
+            {
+                *proc_domain_id = proc_domain_module_list->proc_domain_id;
+                return AR_EOK;
+            }
+        }
+    }
+
+    return AR_ENOTEXIST;
 }
 
 int32_t IsPidGlobalyPersistent(uint32_t pid)

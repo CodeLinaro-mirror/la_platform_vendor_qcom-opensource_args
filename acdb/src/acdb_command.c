@@ -31,7 +31,7 @@
 * Preprocessor Definitions and Constants
 *--------------------------------------------------------------------------- */
 #define ACDB_SOFTWARE_VERSION_MAJOR 0x00000001
-#define ACDB_SOFTWARE_VERSION_MINOR 0x00000026
+#define ACDB_SOFTWARE_VERSION_MINOR 0x00000027
 #define ACDB_SOFTWARE_VERSION_REVISION 0x00000000
 #define ACDB_SOFTWARE_VERSION_CPLINFO 0x00000000
 
@@ -3063,6 +3063,393 @@ int32_t AcdbCmdGetTaggedModules(AcdbGetTaggedModulesReq* req, AcdbGetTaggedModul
 
     //Build Instance ID List
     status = BuildTaggedModulePayload(&ci_def, &def_offset_list, rsp);
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Failed to build tagged module list response.", status);
+    }
+
+    return status;
+}
+
+/**
+* \brief
+*       Builds the tagged module list response. The size of the list is
+*       accumulated on the first call. The data is filled once the
+*       response buffer is allocated.
+*
+* \param[in/out] ci_def: chunk information for ACDB_CHUNKID_TAGGED_MODULE_DEF.
+* \param[in/out] def_offset_list: list of def offsets definition tables that
+*                                 contain <ModuleID, InstanceID>'s
+* \param[in/out] rsp: the response structure to populate
+*
+* \return AR_EOK on success, non-zero otherwise
+*/
+int32_t BuildProcTaggedModulePayload(ChunkInfo* ci_def, AcdbUintList* subgraph_list, AcdbUintList* def_offset_list, AcdbGetProcTaggedModulesRsp* rsp)
+{
+    int32_t status = AR_EOK;
+    uint32_t offset = 0;
+    uint32_t num_modules = 0;
+    uint32_t total_num_module_inst = 0;
+    uint32_t expected_size = 0;
+    uint32_t actual_size = 0;
+    uint32_t blob_offset = 0;
+    /* Stores processor domain id and blob offset pairs.The offset is for 
+     * a AcdbProcTaggedModules entry within the 
+     * AcdbGetProcTaggedModulesRsp::proc_tagged_module_list */
+    AcdbGenericList proc_domain_id_list = { 0 };
+    AcdbProcDomainOffsetPair proc_domain_offset_pair = { 0 };
+    AcdbSubgraphPdmMap sg_iid_map = { 0 };
+    AcdbBlob proc_tagged_modules_blob = { 0 };
+    AcdbOp op = IsNull(rsp->proc_tagged_module_list) ?
+        ACDB_OP_GET_SIZE : ACDB_OP_GET_DATA;
+
+    if (IsNull(ci_def) || IsNull(def_offset_list) || IsNull(rsp))
+    {
+        ACDB_ERR("Error[%d]: Invalid input parameter",
+            AR_EBADPARAM);
+        return AR_EBADPARAM;
+    }
+
+    if (op == ACDB_OP_GET_DATA && rsp->list_size == 0)
+    {
+        ACDB_DBG("Error[%d]: Unable to fill response since "
+            "AcdbGetProcTaggedModulesRsp::list_size is zero",
+            AR_EBADPARAM);
+        return AR_EFAILED;
+    }
+
+    /* Use glb_buf_3 to store list of unique processors found while iterating 
+     * through subgraphs and procs.
+     * GLB_BUFFER_3 can hold up to GLB_BUF_3_LENGTH entries. We will never
+     * have 500 procs, but we need to add the length check to prevent
+     * klockwork from complaining */
+    status = AcdbGenericListInit(&proc_domain_id_list, sizeof(AcdbProcDomainOffsetPair), 
+        GLB_BUF_3_LENGTH * sizeof(uint32_t), (void**)&glb_buf_3);
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Unable to initialize list", status);
+        return status;
+    }
+
+    proc_tagged_modules_blob.buf = (uint8_t*)rsp->proc_tagged_module_list;
+    proc_tagged_modules_blob.buf_size = 0;
+
+    expected_size = rsp->list_size;
+
+    for (uint32_t i = 0; i < def_offset_list->count; i++)
+    {
+        ar_mem_set((void*)&sg_iid_map, 0, sizeof(AcdbSubgraphPdmMap));
+
+        status = DataProcGetSubgraphProcIidMap(subgraph_list->list[i], &sg_iid_map);
+        if (AR_FAILED(status))
+        {
+            ACDB_DBG("Error[%d]: Failed to get subgraph-to-proccessor domain module map", status);
+            return status;
+        }
+
+        offset = ci_def->chunk_offset;
+        offset += def_offset_list->list[i];
+        status = FileManReadBuffer(&num_modules, sizeof(uint32_t), &offset);
+        if (AR_FAILED(status))
+        {
+            ACDB_DBG("Error[%d]: Unable to read number of module instances "
+                "from definition table", status);
+            return status;
+        }
+
+        if (num_modules == 0) continue;
+
+        //get tagged module list
+        AcdbModuleInstance* tagged_modules = NULL;
+        status = FileManGetFilePointer2((void**)&tagged_modules, offset);
+        if (AR_FAILED(status))
+        {
+            ACDB_DBG("Error[%d]: Unable to read number of module instances "
+                "from definition table", status);
+            return status;
+        }
+
+        for (uint32_t k = 0; k < num_modules; k++)
+        {
+            uint32_t proc_domain_id = 0;
+            status = DataProcGetProcDomainForModule(
+                &sg_iid_map,
+                tagged_modules[k].mid_iid, 
+                &proc_domain_id);
+            if (AR_FAILED(status))
+            {
+                ACDB_ERR("Error[%d]: Unable to get proccessor domain ID for "
+                    "sg: 0x%x iid: 0x%x", 
+                    status, sg_iid_map.subgraph_id, tagged_modules[k].mid_iid);
+                return status;
+            }
+
+            /* We only need to keep track of the total number of procs during the 
+             * get_size call b/c the rsp should be populated with the total number 
+             * of procs in the get_data call */
+            //Add unique proc_domain_id entries to list
+            bool_t is_new_proc = TRUE;
+            AcdbGenericListItem found_proc_domain = { 0 };
+            proc_domain_offset_pair.proc_domain_id = proc_domain_id;
+
+            status = proc_domain_id_list.find(
+                &proc_domain_id_list, &proc_domain_offset_pair, 
+                sizeof(proc_domain_offset_pair), 1, &found_proc_domain);
+            if (AR_SUCCEEDED(status))
+            {
+                is_new_proc = FALSE;
+
+                if (!IsNull(found_proc_domain.item))
+                {
+                    proc_domain_offset_pair = *(AcdbProcDomainOffsetPair*)found_proc_domain.item;
+                }
+                else
+                {
+                    ACDB_ERR("Error[%d]: Unable to get proc offset pair from "
+                        "item field after find operation", status);
+                    return AR_EFAILED;
+                }
+            }
+
+            if (is_new_proc && proc_domain_id_list.count < proc_domain_id_list.max_count)
+            {
+                blob_offset = proc_tagged_modules_blob.buf_size;
+                proc_domain_offset_pair.offset = blob_offset;
+                proc_domain_id_list.add_range(&proc_domain_id_list, 
+                    &proc_domain_offset_pair, sizeof(AcdbProcDomainOffsetPair), 1);
+                status = AR_EOK;
+
+                if (proc_domain_id_list.count > 1)
+                {
+                    proc_domain_id_list.sort(&proc_domain_id_list, 0);
+                }
+            }
+            if (op == ACDB_OP_GET_DATA)
+            {
+                /* Implement memory shifting logic. We dont want to create additional memory. 
+                 * Add the first processor domain id and the modules associated with it
+                 * If a new processor domain is discovered add it right after the first processor domains info
+                 * If we encounter a module that has the proc domain of the first proc entry make room in the 
+                 * memory regoin by shifting the subsequent proc info downward using memmove
+                 */
+                AcdbProcTaggedModules* proc_taggged_module = NULL;
+
+                /* Add new proc to the end of the proc list */
+                if (is_new_proc)
+                {
+                    actual_size = proc_tagged_modules_blob.buf_size 
+                        + sizeof(AcdbProcTaggedModules) + num_modules * sizeof(AcdbModuleInstance);
+
+                    if (actual_size > expected_size)
+                    {
+                        ACDB_DBG("Error[%d]: Buffer not large enough to store "
+                            "response. Expected Size: %d bytes. Actual Size: %d bytes",
+                            AR_ENEEDMORE, expected_size, actual_size);
+                        return AR_ENEEDMORE;
+                    }
+
+                    uint32_t module_count = 1;
+
+                    ACDB_MEM_CPY_SAFE(
+                        proc_tagged_modules_blob.buf + blob_offset, sizeof(uint32_t), 
+                        &proc_domain_id, sizeof(uint32_t));
+                    blob_offset += sizeof(uint32_t);
+                    ACDB_MEM_CPY_SAFE(
+                        proc_tagged_modules_blob.buf + blob_offset, sizeof(uint32_t), 
+                        &module_count, sizeof(uint32_t));
+                    blob_offset += sizeof(uint32_t);
+                    ACDB_MEM_CPY_SAFE(
+                        proc_tagged_modules_blob.buf + blob_offset, sizeof(AcdbModuleInstance),
+                        &tagged_modules[k], sizeof(AcdbModuleInstance));
+                    blob_offset += sizeof(AcdbModuleInstance);
+
+                    proc_tagged_modules_blob.buf_size += sizeof(AcdbProcTaggedModules) 
+                        + module_count * sizeof(AcdbModuleInstance);
+                    continue;
+                }
+
+                /* Add new module entry to an existing procs module 
+                 * list and shift the memory of subsequent procs */
+                proc_taggged_module = (AcdbProcTaggedModules*)(
+                    (uint8_t*)rsp->proc_tagged_module_list + proc_domain_offset_pair.offset);
+
+                if (proc_taggged_module != NULL)
+                {
+                    //Proc already exists, but we are adding a new module entry
+                    uint32_t blob_module_entry_offset = proc_domain_offset_pair.offset 
+                        + sizeof(AcdbProcTaggedModules) 
+                        + proc_taggged_module->num_tagged_mids * sizeof(AcdbModuleInstance);
+                    proc_taggged_module->num_tagged_mids++;
+
+                    size_t size_of_data_to_move = (size_t)proc_tagged_modules_blob.buf_size 
+                        - (size_t)blob_module_entry_offset;
+
+                    actual_size = proc_tagged_modules_blob.buf_size + sizeof(AcdbModuleInstance);
+                    if (actual_size > expected_size)
+                    {
+                        ACDB_DBG("Error[%d]: Buffer not large enough to store "
+                            "response. Expected Size: %d bytes. Actual Size: %d bytes",
+                            AR_ENEEDMORE, expected_size, actual_size);
+                        return AR_ENEEDMORE;
+                    }
+
+                    if (0 != size_of_data_to_move)
+                    {
+                        ar_mem_move(
+                            (uint8_t*)proc_tagged_modules_blob.buf 
+                            + blob_module_entry_offset + sizeof(AcdbModuleInstance), size_of_data_to_move,
+                            (uint8_t*)proc_tagged_modules_blob.buf 
+                            + blob_module_entry_offset, size_of_data_to_move);
+                    }
+
+                    ACDB_MEM_CPY_SAFE(
+                        proc_tagged_modules_blob.buf + blob_module_entry_offset, sizeof(AcdbModuleInstance), 
+                        &tagged_modules[k], sizeof(AcdbModuleInstance));
+                    proc_tagged_modules_blob.buf_size += sizeof(AcdbModuleInstance);
+
+                    /* We need to update the offsets of our proc domain entries after shifting data */
+                    for (uint32_t j = 0; j < proc_domain_id_list.count; j++)
+                    {
+                        AcdbProcDomainOffsetPair* p = (AcdbProcDomainOffsetPair*)proc_domain_id_list.list + j;
+                        if (p->proc_domain_id == proc_domain_offset_pair.proc_domain_id)
+                            continue;
+
+                        if (p->offset > proc_domain_offset_pair.offset)
+                        {
+                            p->offset += sizeof(AcdbModuleInstance);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (op == ACDB_OP_GET_SIZE)
+        {
+            total_num_module_inst += num_modules;
+        }
+    }
+
+    if (op == ACDB_OP_GET_SIZE)
+    {
+        rsp->num_procs = proc_domain_id_list.count;
+        rsp->list_size = rsp->num_procs * sizeof(AcdbProcTaggedModules)
+            + total_num_module_inst * sizeof(AcdbModuleInstance);
+    }
+
+    if (rsp->num_procs == 0 || rsp->list_size == 0)
+    {
+        status = AR_ENOTEXIST;
+        ACDB_ERR("Error[%d]: No tagged modules found", status);
+    }
+
+    return status;
+}
+
+int32_t AcdbCmdGetProcTaggedModules(AcdbGetProcTaggedModulesReq* req, AcdbGetProcTaggedModulesRsp* rsp, uint32_t rsp_size)
+{
+    int32_t status = AR_EOK;
+    ChunkInfo ci_lut = { 0 };
+    ChunkInfo ci_def = { 0 };
+    SubgraphTagLutEntry lut_entry = { 0 };
+    uint32_t sg_def_offset_list_length = GLB_BUF_2_LENGTH/2;
+    AcdbUintList def_offset_list = { 0 };
+    AcdbUintList subgraph_list = { 0 };
+
+    if (req == NULL || rsp_size < sizeof(AcdbGetProcTaggedModulesRsp))
+    {
+        ACDB_ERR("Error[%d]: Invalid input parameter(s)", AR_EBADPARAM);
+        return AR_EBADPARAM;
+    }
+
+    if (req->num_sg_ids == 0 || IsNull(req->sg_ids))
+    {
+        ACDB_ERR("Error[%d]: The subgraph list cannot be empty", AR_EBADPARAM);
+        return AR_EBADPARAM;
+    }
+
+    /* Use subgraph list here for setting the database context */
+    subgraph_list.count = req->num_sg_ids;
+    subgraph_list.list = req->sg_ids;
+
+    status = acdb_ctx_man_ioctl(
+        ACDB_CTX_MAN_CMD_SET_CONTEXT_HANDLE_USING_SUBGRAPHS,
+        &subgraph_list, sizeof(subgraph_list), NULL, 0);
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Unable to set file index",
+            status);
+        return status;
+    }
+
+    ci_lut.chunk_id = ACDB_CHUNKID_TAGGED_MODULE_LUT;
+    ci_def.chunk_id = ACDB_CHUNKID_TAGGED_MODULE_DEF;
+    status = ACDB_GET_CHUNK_INFO(&ci_lut, &ci_def);
+    if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Unable to retrieve Tagged Module "
+            "lookup/definition tables.", status);
+        return status;
+    }
+
+    /* Repurpose the subgraph list here for storing subgraphs containing the 
+     * tag we are searching for. def_offset_list and subgraph_list have 
+     * matching indexes. For example:
+     *
+     *  subgraph_list.list[i] is associated with def_offset_list.list[i] 
+     */
+    def_offset_list.list = &glb_buf_2[0];
+    subgraph_list.list = &glb_buf_2[sg_def_offset_list_length - 1];
+    subgraph_list.count = 0;
+
+    lut_entry.tag_id = req->tag_id;
+
+    for (uint32_t i = 0; i < req->num_sg_ids; i++)
+    {
+        lut_entry.sg_id = req->sg_ids[i];
+
+        status = SearchTaggedModuleMapLut(&ci_lut, &lut_entry);
+        if (AR_FAILED(status) && status == AR_ENOTEXIST)
+        {
+            //ACDB_DBG("Error[%d]: Subgraph(0x%x) does not contain Tag(0x%x). "
+            //    "Skipping..", status, lut_entry.tag_id, lut_entry.sg_id);
+            continue;
+        }
+        else if (AR_FAILED(status))
+        {
+            ACDB_ERR("Error[%d]: Error occured while looking for "
+                "Tag(0x%x) under Subgraph(0x%x)", status,
+                lut_entry.tag_id, lut_entry.sg_id);
+            return status;
+        }
+
+        //Add to def offset list
+        if (def_offset_list.count > sg_def_offset_list_length ||
+            subgraph_list.count > sg_def_offset_list_length)
+        {
+            /* This will only occur if there are 500 subgraphs passed in to
+             * this API that contain the tag that we are looking for. glb_buf_2
+             * can store up to 1000 entries: 500 sg ids, 500 def offsets */
+            ACDB_ERR("Error[%d]: Not enough space to store "
+                "additional def offset", status);
+            return AR_ENOMEMORY;
+        }
+
+        def_offset_list.list[def_offset_list.count] = lut_entry.offset;
+        subgraph_list.list[subgraph_list.count] = lut_entry.sg_id;
+        def_offset_list.count++;
+        subgraph_list.count++;
+    }
+
+    if (def_offset_list.count == 0)
+    {
+        status = AR_ENOTEXIST;
+        ACDB_ERR("Error[%d]: Tag(0x%x) not found in subgraphs provided.",
+            status, lut_entry.tag_id);
+        return status;
+    }
+
+    //Build Instance ID List
+    status = BuildProcTaggedModulePayload(&ci_def, &subgraph_list, &def_offset_list, rsp);
     if (AR_FAILED(status))
     {
         ACDB_ERR("Error[%d]: Failed to build tagged module list response.", status);
@@ -9886,7 +10273,7 @@ int32_t AcdbCmdGetSubgraphProcIds(AcdbCmdGetSubgraphProcIdsReq *req,
 	uint32_t data_offset = 0;
 	uint32_t proc_offset = 0;
 	uint32_t num_modules_proc = 0;
-	AcdbSubgraphPdmMap *sg_mod_iid_map = NULL;
+    AcdbSubgraphPdmMap sg_mod_iid_map = { 0 };
     AcdbUintList subgraph_list = { 0 };
 
 	if (rsp_size < sizeof(AcdbCmdGetSubgraphProcIdsRsp))
@@ -9911,75 +10298,70 @@ int32_t AcdbCmdGetSubgraphProcIds(AcdbCmdGetSubgraphProcIdsReq *req,
 
 	for (uint32_t i = 0; i < req->num_sg_ids; i++)
 	{
-		sg_mod_iid_map = NULL;
+        ar_mem_set((void*)&sg_mod_iid_map, 0, sizeof(AcdbSubgraphPdmMap));
 		proc_offset = 0;
-		status = GetSubgraphIIDMap(req->sg_ids[i], &sg_mod_iid_map);
+		status = DataProcGetSubgraphProcIidMap(req->sg_ids[i], &sg_mod_iid_map);
 		if (AR_EOK != status)
 		{
-			//Return even if it can't find data for one of the given subgraphs or memory allocation failed
+			//Return even if it can't find data for one of the given subgraphs
             goto end;
 		}
-		if (sg_mod_iid_map != NULL)
+
+		num_sgIds++;
+        total_sz += sizeof(AcdbSgProcIdsMap)
+            + sg_mod_iid_map.proc_count * sizeof(uint32_t); //sg_mod_iid_map->size;
+		if (rsp->sg_proc_ids != NULL)
 		{
-			num_sgIds++;
-            total_sz += sizeof(AcdbSgProcIdsMap)
-                + sg_mod_iid_map->proc_count * sizeof(uint32_t); //sg_mod_iid_map->size;
-			if (rsp->sg_proc_ids != NULL)
+            if (rsp->size < (data_offset + (2 * sizeof(uint32_t))))
+            {
+                status = AR_ENEEDMORE;
+                goto end;
+            }
+
+			ACDB_MEM_CPY_SAFE(
+                rsp->sg_proc_ids + data_offset,
+                sizeof(sg_mod_iid_map.subgraph_id),
+                &sg_mod_iid_map.subgraph_id,
+                sizeof(sg_mod_iid_map.subgraph_id));
+			data_offset += sizeof(sg_mod_iid_map.subgraph_id);
+
+			ACDB_MEM_CPY_SAFE(rsp->sg_proc_ids + data_offset,
+                sizeof(sg_mod_iid_map.proc_count),
+                &sg_mod_iid_map.proc_count,
+                sizeof(sg_mod_iid_map.proc_count));
+			data_offset += sizeof(sg_mod_iid_map.proc_count);
+
+			for (uint32_t j = 0; j < sg_mod_iid_map.proc_count; j++)
 			{
-                if (rsp->size < (data_offset + (2 * sizeof(uint32_t))))
-                {
+				if (rsp->size < (data_offset + sizeof(uint32_t)))
+				{
                     status = AR_ENEEDMORE;
                     goto end;
-                }
-
-				ACDB_MEM_CPY_SAFE(
-                    rsp->sg_proc_ids + data_offset,
-                    sizeof(sg_mod_iid_map->subgraph_id),
-                    &sg_mod_iid_map->subgraph_id,
-                    sizeof(sg_mod_iid_map->subgraph_id));
-				data_offset += sizeof(sg_mod_iid_map->subgraph_id);
-
-				ACDB_MEM_CPY_SAFE(rsp->sg_proc_ids + data_offset,
-                    sizeof(sg_mod_iid_map->proc_count),
-                    &sg_mod_iid_map->proc_count,
-                    sizeof(sg_mod_iid_map->proc_count));
-				data_offset += sizeof(sg_mod_iid_map->proc_count);
-
-				for (uint32_t j = 0; j < sg_mod_iid_map->proc_count; j++)
-				{
-					if (rsp->size < (data_offset + sizeof(uint32_t)))
-					{
-                        status = AR_ENEEDMORE;
-                        goto end;
-					}
-
-                    ACDB_MEM_CPY_SAFE(rsp->sg_proc_ids + data_offset,
-                        sizeof(uint32_t),
-                        sg_mod_iid_map->proc_info + proc_offset,
-                        sizeof(uint32_t));
-                    data_offset += sizeof(uint32_t); //size of each procID
-
-					proc_offset += sizeof(uint32_t);
-					ACDB_MEM_CPY_SAFE(&num_modules_proc,
-                        sizeof(uint32_t),
-                        sg_mod_iid_map->proc_info + proc_offset,
-                        sizeof(uint32_t));
-					proc_offset += (sizeof(num_modules_proc)
-                        + (num_modules_proc * sizeof(AcdbModuleInstance)));
 				}
+
+                ACDB_MEM_CPY_SAFE(rsp->sg_proc_ids + data_offset,
+                    sizeof(uint32_t),
+                    sg_mod_iid_map.proc_info + proc_offset,
+                    sizeof(uint32_t));
+                data_offset += sizeof(uint32_t); //size of each procID
+
+				proc_offset += sizeof(uint32_t);
+				ACDB_MEM_CPY_SAFE(&num_modules_proc,
+                    sizeof(uint32_t),
+                    sg_mod_iid_map.proc_info + proc_offset,
+                    sizeof(uint32_t));
+				proc_offset += (sizeof(num_modules_proc)
+                    + (num_modules_proc * sizeof(AcdbModuleInstance)));
 			}
 		}
-		FreeSubgraphIIDMap(sg_mod_iid_map);
 	}
 
 end:
     if (AR_FAILED(status))
     {
-        FreeSubgraphIIDMap(sg_mod_iid_map);
         return status;
     }
 
-    sg_mod_iid_map = NULL;
 	rsp->num_sg_ids = num_sgIds;
 	rsp->size = total_sz;
 	return status;

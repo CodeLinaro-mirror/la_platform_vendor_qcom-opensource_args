@@ -35,7 +35,7 @@
 *	\return
 *		0 on success, non-zero on failure
 */
-typedef void(__stdcall *ats_cmd_rsp_callback_t)(
+typedef void(*ats_cmd_rsp_callback_t)(
     uint8_t *req_buffer, uint32_t req_buffer_length, 
     uint8_t **resp_buffer, uint32_t *resp_buffer_length);
 

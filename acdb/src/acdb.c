@@ -387,6 +387,19 @@ int32_t acdb_ioctl(uint32_t cmd_id,
 		    status = AcdbCmdGetTaggedModules(req, rsp, rsp_struct_size);
 		}
 		break;
+	case ACDB_CMD_GET_PROC_TAGGED_MODULES:
+		if (IsNull(cmd_struct) || cmd_struct_size != sizeof(AcdbGetProcTaggedModulesReq) ||
+			IsNull(rsp_struct) || rsp_struct_size == 0)
+		{
+			status = AR_EBADPARAM;
+		}
+		else
+		{
+			AcdbGetProcTaggedModulesReq* req = (AcdbGetProcTaggedModulesReq*)cmd_struct;
+			AcdbGetProcTaggedModulesRsp* rsp = (AcdbGetProcTaggedModulesRsp*)rsp_struct;
+			status = AcdbCmdGetProcTaggedModules(req, rsp, rsp_struct_size);
+		}
+		break;
 	case ACDB_CMD_GET_DRIVER_DATA:
         if (IsNull(cmd_struct) || cmd_struct_size != sizeof(AcdbDriverData) ||
             IsNull(rsp_struct) || rsp_struct_size == 0)

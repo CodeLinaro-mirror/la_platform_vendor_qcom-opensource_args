@@ -251,24 +251,31 @@ bool_t DoesSubgraphContainModule(uint32_t subgraph_id, uint32_t module_iid, int3
 
 /**
 * \brief
-* Retrieve the mapping between a subgraph and its modules from the ACDB DATA files
-* Caller is responsible for freeing memory to sg_iid_map
-*
-* \param[in] subgraph_id: The subgraph to search for
-* \param[out] sg_iid_map: The map parsed from the data files
-* \return 0 on Success, non-zero on failure
-*
-* \sa FreeSubgraphIIDMap
+*		Retrieves the processor domain ID that a module is associated with. 
+*       The caller should already know that the module instance belongs to the subgraph.
+* \param[in] subgraph_proc_domain_map: a map containing associations between a subgraphs, the 
+*                                      modules in the subgraph and the processors domains that the 
+*                                      modules run under
+* \param[in] module_iid: the instance id of the module
+* \param[out] proc_domain_id: the processor domain id returned
+* \sa DoesSubgraphContainModule
+* \return 0 on success, non-zero on failure
 */
-int32_t GetSubgraphIIDMap(uint32_t subgraph_id, AcdbSubgraphPdmMap **sg_iid_map);
+int32_t DataProcGetProcDomainForModule(AcdbSubgraphPdmMap* subgraph_proc_domain_map, uint32_t module_iid, uint32_t* proc_domain_id);
 
 /**
 * \brief
-* Free the subgraph module instance id map
+* Retrieve a map containing associations between:
+*       1. a subgraph, 
+*       2. the modules in the subgraph and 
+*       3. the processors domains that the modules run under
 *
-* \param[in/out] sg_iid_map: subgraph instance id map to free
+* \param[in] subgraph_id: The subgraph to retrieve the map for
+* \param[out] subgraph_proc_iid_map: The map parsed from the acdb data files
+* \return 0 on Success, non-zero on failure
+*
 */
-void FreeSubgraphIIDMap(AcdbSubgraphPdmMap *sg_iid_map);
+int32_t DataProcGetSubgraphProcIidMap(uint32_t subgraph_id, AcdbSubgraphPdmMap* subgraph_proc_iid_map);
 
 /**
 * \brief

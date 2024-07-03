@@ -19,6 +19,7 @@
 *  \endcond
 *=============================================================================
 */
+#ifdef ATS_TRANSPORT_TCPIP
 
 //#define FEATURE_ATS_PUSH //TODO: remove this after adding it to the build settings
 #if defined(FEATURE_ATS_PUSH)
@@ -70,4 +71,5 @@ private:
 	static void connect(void* arg);
 };
 #endif /* FEATURE_ATS_PUSH */
+#endif /*ATS_TRANSPORT_TCPIP*/
 #endif /* _TCPIP_RTM_SERVER_H_ */

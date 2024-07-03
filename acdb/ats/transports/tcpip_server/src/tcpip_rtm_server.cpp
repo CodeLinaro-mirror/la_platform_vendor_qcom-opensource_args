@@ -16,6 +16,8 @@
 *  \endcond
 *=============================================================================
 */
+#ifdef ATS_TRANSPORT_TCPIP
+
 #include "tcpip_rtm_server.h"
 #if defined(FEATURE_ATS_PUSH)
 
@@ -207,3 +209,5 @@ int32_t TcpipRtmServer::send_rtm_data(const char_t* buffer, uint32_t buffer_size
 }
 
 #endif /*#if defined(ATS_RTM_PUSH)*/
+
+#endif /*ATS_TRANSPORT_TCPIP*/

@@ -254,4 +254,14 @@ void LogKeyVector(const AcdbGraphKeyVector *key_vector, KeyVectorType type);
 void LogKeyIDs(const AcdbUintList *keys, KeyVectorType type);
 
 uint32_t AcdbCeil(uint32_t x, uint32_t y);
+
+/**
+* \brief AcdbGenericListInit
+*		Initializes a generic list by setting the element size, max number of elements, list data, and function pointers
+* \param [in] list: The list to initialize
+* \param [in] element_size: The size of list elements in bytes
+* \param [in] max_element_count: The max number of elements the list can store
+* \param [in] list_data: A pointer to the memory used for storing data
+*/
+int32_t AcdbGenericListInit(AcdbGenericList* list, uint32_t element_size, uint32_t max_element_count, void** list_data);
 #endif /* __ACDB_UTILITY_H__ */

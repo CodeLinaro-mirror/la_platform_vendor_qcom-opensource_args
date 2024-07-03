@@ -17,6 +17,7 @@
 *=============================================================================
 */
 
+#ifdef ATS_TRANSPORT_TCPIP
 /*------------------------------------------
 * Includes
 *------------------------------------------*/
@@ -67,5 +68,7 @@ extern "C"{
 #ifdef __cplusplus
 }
 #endif
+
+#endif /*ATS_TRANSPORT_TCPIP*/
 #endif /*_TCPIP_SOCKET_UTIL_H_*/
 

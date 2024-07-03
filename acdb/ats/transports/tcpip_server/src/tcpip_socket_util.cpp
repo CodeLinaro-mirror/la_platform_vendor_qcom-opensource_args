@@ -13,6 +13,7 @@
 *  \endcond
 *=============================================================================
 */
+#ifdef ATS_TRANSPORT_TCPIP
 
 #include "tcpip_socket_util.h"
 #include "ar_osal_mem_op.h"
@@ -255,3 +256,5 @@ int32_t tcpip_socket_util_get_client_name(
     
     return status;
 }
+
+#endif /*ATS_TRANSPORT_TCPIP*/

@@ -73,6 +73,10 @@ int32_t AcdbCmdGetTaggedModules(
     AcdbGetTaggedModulesReq* req,
     AcdbGetTaggedModulesRsp* rsp, uint32_t rsp_size);
 
+int32_t AcdbCmdGetProcTaggedModules(
+    AcdbGetProcTaggedModulesReq* req,
+    AcdbGetProcTaggedModulesRsp* rsp, uint32_t rsp_size);
+
 int32_t AcdbCmdGetDriverData(
     AcdbDriverData *driver_data, AcdbBlob* rsp,
     uint32_t rsp_size );

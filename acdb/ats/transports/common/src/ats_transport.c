@@ -31,6 +31,13 @@
 #define ATS_TRANSPORT_DBG(...) AR_LOG_DEBUG(LOG_TAG, __VA_ARGS__)
 #define ATS_TRANSPORT_INFO(...) AR_LOG_INFO(LOG_TAG, __VA_ARGS__)
 
+#if !defined(ATS_TRANSPORT_DIAG) && !defined(ATS_TRANSPORT_TCPIP)
+/* The DIAG transport is the default transport. If no transports are 
+ * specified in the build configuration then ATS_TRANSPORT_DIAG 
+ * will be defined */
+#define ATS_TRANSPORT_DIAG
+#endif
+
 int32_t ats_transport_init(ats_cmd_rsp_callback_t cmd_rsp_callback)
 {
     int32_t status = AR_EOK;

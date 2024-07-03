@@ -21,6 +21,8 @@
 *=============================================================================
 */
 
+#ifdef ATS_TRANSPORT_TCPIP
+
 #include <string>
 #include "ar_osal_mutex.h"
 #include "ar_osal_error.h"
@@ -181,6 +183,8 @@ public:
     int32_t send_rtm_log_data(const uint8_t* buffer, uint32_t buffer_size);
 #endif
 };
+
+#endif /*ATS_TRANSPORT_TCPIP*/
 
 #endif /*_TCPIP_CMD_SERVER_H_*/
 

@@ -602,3 +602,126 @@ uint32_t AcdbCeil(uint32_t x, uint32_t y)
     return ((uint32_t)x % (uint32_t)y) == 0 ? x / y : x / y + 1;
 }
 
+int32_t AcdbGenericListAddRange(void* list, void* items, uint32_t item_size, uint32_t count)
+{
+	AcdbGenericList* gen_list = (void*)list;
+
+	//Add one or more items to the list
+	if (IsNull(list) || IsNull(items))
+		return AR_EBADPARAM;
+	if (IsNull(gen_list->list))
+		return AR_EFAILED;
+	if (item_size == 0 || count == 0)
+	{
+		ACDB_DBG("Warning[%d]: Unable to add items to the list "
+			"since item size or count is zero.", AR_EOK);
+		return AR_EOK;
+	}
+
+	/* Not enough space to add new items to this list */
+	if (count > gen_list->max_count ||
+		gen_list->count + count > gen_list->max_count)
+	{
+		ACDB_DBG("Warning[%d]: No enough space to add new items to list.");
+		ACDB_DBG("List | max length %d.", gen_list->max_count);
+		ACDB_DBG("List | current length %d.", gen_list->count);
+		ACDB_DBG("List | number of items to add %d.", count);
+		return AR_ENEEDMORE;
+	}
+
+	uint8_t* list_data = NULL;
+	if (gen_list->count == 0)
+	{
+		list_data = (uint8_t*)gen_list->list;
+	}
+	else
+	{
+		list_data = (uint8_t*)gen_list->list + gen_list->element_size * gen_list->count;
+	}
+
+	ACDB_MEM_CPY_SAFE(list_data, item_size * count, items, item_size * count);
+	gen_list->count += count;
+
+	return AR_EOK;
+}
+
+int32_t AcdbGenericListFind(void* list, void* item, uint32_t item_size, uint32_t num_search_keys, AcdbGenericListItem* found_item)
+{
+	int32_t status = AR_EOK;
+	AcdbGenericList* gen_list = (void*)list;
+	if (IsNull(list) || IsNull(item) || IsNull(found_item))
+		return AR_EBADPARAM;
+	if (IsNull(gen_list->list))
+		return AR_EFAILED;
+	if (item_size == 0 || item_size != gen_list->element_size)
+		return AR_EFAILED;
+
+	uint32_t list_size = gen_list->element_size * gen_list->count;
+	uint32_t item_index = 0;
+	uint32_t num_struct_elements = item_size / sizeof(uint32_t);
+
+	if (list_size == 0)
+	{
+		/* The list is empty */
+		return AR_ENOTEXIST;
+	}
+	if (SEARCH_ERROR == AcdbDataBinarySearch2(
+		gen_list->list, list_size, 
+		item, num_search_keys, 
+		num_struct_elements, &item_index))
+	{
+		return AR_ENOTEXIST;
+	}
+
+	found_item->index = item_index / num_struct_elements;
+	found_item->item = (uint8_t*)gen_list->list + found_item->index * gen_list->element_size;
+
+	return status;
+}
+
+int32_t AcdbGenericListSort(void* list, uint32_t key_elem_struct_position)
+{
+	int32_t status = AR_EOK;
+	AcdbGenericList* gen_list = (void*)list;
+	if (IsNull(list))
+		return AR_EBADPARAM;
+	if (IsNull(gen_list->list))
+		return AR_EFAILED;
+
+	size_t list_size = (size_t)(gen_list->element_size * gen_list->count);
+	status = AcdbSort2(list_size, gen_list->list, gen_list->element_size, key_elem_struct_position);
+
+	return status;
+}
+
+int32_t AcdbGenericListInit(AcdbGenericList* list, uint32_t element_size, uint32_t max_list_size, void** list_data)
+{
+	if (IsNull(list))
+	{
+		ACDB_ERR("Error[%d]: list input parameter is null", AR_EBADPARAM);
+		return AR_EBADPARAM;
+	}
+	if (IsNull(list_data))
+	{
+		ACDB_ERR("Error[%d]: list_data input parameter is null", AR_EBADPARAM);
+		return AR_EBADPARAM;
+	}
+	if (element_size == 0 || max_list_size == 0)
+	{
+		ACDB_DBG("Error[%d]: List max list size and/or element size cannot be zero", AR_EBADPARAM);
+		return AR_EBADPARAM;
+	}
+
+	/* Set list properties */
+	list->count = 0;
+	list->element_size = element_size;
+	list->max_count = max_list_size / element_size;
+	list->list = list_data;
+
+	/* Set function pointers */
+	list->add_range = AcdbGenericListAddRange;
+	list->find = AcdbGenericListFind;
+	list->sort = AcdbGenericListSort;
+
+	return AR_EOK;
+}

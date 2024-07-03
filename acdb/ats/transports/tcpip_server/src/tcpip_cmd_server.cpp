@@ -17,6 +17,7 @@
 *  \endcond
 *=============================================================================
 */
+#ifdef ATS_TRANSPORT_TCPIP
 #include <thread>
 #include <chrono>
 #include "tcpip_socket_util.h"
@@ -940,3 +941,5 @@ static void tcpip_cmd_server_create_error_resp(
         &ar_status_code,
         ATS_ERROR_CODE_LENGTH);
 }
+
+#endif /*ATS_TRANSPORT_TCPIP*/

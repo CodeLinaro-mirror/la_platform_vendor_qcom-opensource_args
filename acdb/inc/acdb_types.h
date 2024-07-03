@@ -752,4 +752,88 @@ struct _acdb_tag_def_offset_pair_list_t
     AcdbTagDefOffsetPair* list;
 };
 
+typedef struct _acdb_proc_domain_offset_pair_t AcdbProcDomainOffsetPair;
+struct _acdb_proc_domain_offset_pair_t
+{
+    /**< The processor domain id */
+    uint32_t proc_domain_id;
+    /**< An general purpose offset */
+    uint32_t offset;
+};
+
+typedef struct _acdb_generic_list_item_t AcdbGenericListItem;
+struct _acdb_generic_list_item_t
+{
+    /**< The index of an item in an AcdbGenericList instance  */
+    uint32_t index;
+    /**< A pointer to the item in AcdbGenericList::list */
+    void* item;
+};
+
+/**
+* \brief ACDB_GENERIC_LIST_ADD
+*		Adds a range of elements to a generic list
+* \param [in] list: pointer to a AcdbGenericList type
+* \param [in] items: one or more items to add to the list
+* \param [in] item_size: the size of one item
+* \param [in] count: the number of items to add to the list
+*/
+typedef int32_t(*ACDB_GENERIC_LIST_ADD)(
+    void* list, void* items, uint32_t item_size, uint32_t count);
+
+/**
+* \brief ACDB_GENERIC_LIST_FIND
+*		Searches for an element in a AcdbGenericList
+*       each 
+* \param [in] list: pointer to a AcdbGenericList type
+* \param [in] item: the item to search for. The item must be 
+*                   4 bytes or more. If more then its size must be a 
+*                   multiple of 4. This is required by the binary search 
+*                   used in the find function. For example an item 
+*                   can be a structure with two 4 byte fields
+* \param [in] item_size: the size of the item
+* \param [in] num_search_keys: the number of 4 byte components to use 
+*                              for the search
+* \param [out] found_item: the item found in the list containing the 
+*                          index and a pointer to the item
+*/
+typedef int32_t(*ACDB_GENERIC_LIST_FIND)(
+    void* list, void* item, uint32_t item_size, 
+    uint32_t num_search_keys, AcdbGenericListItem* found_item);
+
+/**
+* \brief ACDB_GENERIC_LIST_FIND
+*		Searches for an element in a AcdbGenericList
+*       each
+* \param [in] list: pointer to a AcdbGenericList type
+* \param [in] key_elem_struct_position: the 4byte key to sort by. Specify the 
+*                                       position of the key within your structure. E.g 
+*           struct _some_struct{
+*               int32_t a; position 0
+*               int32_t b; position 1
+*               int32_t c; position 2
+*               }
+*/
+typedef int32_t(*ACDB_GENERIC_LIST_SORT)(
+    void* list, uint32_t key_elem_struct_position);
+
+/**< A list with an opaque pointer to store homogeneous elements of a particular size  */
+typedef struct _acdb_generic_list_t AcdbGenericList;
+struct _acdb_generic_list_t
+{
+    /**< Number of elemts in the list */
+    uint32_t count;
+    /**< Max number of elemts that this list can store */
+    uint32_t max_count;
+    /**< The size of an element. For example <uint a; uint b> is an element where the size is 8
+     * bytes */
+    uint32_t element_size;
+    /**< Pointer to contiguous memory containing items of size element_size */
+    void* list;
+    /**< Pointer to a function that adds a range of elements to the list */
+    ACDB_GENERIC_LIST_ADD add_range;
+    ACDB_GENERIC_LIST_FIND find;
+    ACDB_GENERIC_LIST_SORT sort;
+};
+
 #endif /*__ACDB_TYPES_H__*/
