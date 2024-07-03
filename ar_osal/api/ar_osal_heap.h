@@ -47,7 +47,7 @@ typedef enum _ar_heap_pool_type
 {
 	/** default pool type, as supported by each platform. */
 	AR_HEAP_POOL_DEFAULT = 0,
-	/** allocated memory is nonpaged and executable—that is, instruction execution is enabled in this memory. */
+	/** allocated memory is nonpaged and executable that is, instruction execution is enabled in this memory. */
 	AR_HEAP_POOL_NON_PAGED_EXECUTE = 1,
 	/** allocated memory is nonpaged and instruction execution is disabled. */
 	AR_HEAP_POOL_NON_PAGED_NX = 2,
