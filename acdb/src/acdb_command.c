@@ -1176,28 +1176,30 @@ int32_t AcdbCmdGetModuleTagData(AcdbSgIdModuleTag *req, AcdbBlob *rsp, uint32_t 
     {
         info.subgraph_id = req->sg_ids[i];
 
-        //Search Tag Key Table Chunk
+        // Search Tag Key Table Chunk
         offset_tag_data_tbl = 0;
         status = TagDataSearchKeyTable(info.subgraph_id,
-            info.tag->tag_id, &offset_tag_data_tbl);
+                                       info.tag->tag_id,
+                                       &offset_tag_data_tbl);
         if (AR_FAILED(status))
         {
-            if(info.op == ACDB_OP_GET_SIZE)
-                ACDB_DBG("Error[%d]: No tag data for Tag(0x%x) "
-                    "found under Subgraph(0x%x). Skipping..",
-                    status, info.tag->tag_id ,info.subgraph_id);
+            if (info.op == ACDB_OP_GET_SIZE)
+                ACDB_DBG("Warning[%d]: No tag data for Tag(0x%x) "
+                         "found under Subgraph(0x%x). Skipping..",
+                         status, info.tag->tag_id, info.subgraph_id);
             status = AR_EOK;
             continue;
         }
 
-        //Search Tag Data LUT
+        // Search Tag Data LUT
         status = TagDataSearchLut(&info.tag->tag_key_vector,
-            offset_tag_data_tbl, &info.data_offsets);
+                                  offset_tag_data_tbl,
+                                  &info.data_offsets);
         if (AR_FAILED(status))
         {
-            ACDB_DBG("Error[%d]: No matching TKV "
-                "found under Subgraph(0x%x) with Tag(0x%x). Skipping..",
-                status, info.subgraph_id, info.tag->tag_id);
+            ACDB_DBG("Warning[%d]: No matching TKV "
+                     "found under Subgraph(0x%x) with Tag(0x%x). Skipping..",
+                     status, info.subgraph_id, info.tag->tag_id);
             status = AR_EOK;
             continue;
         }
