@@ -157,6 +157,18 @@ done:
     return rc;
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+int32_t ar_fmap(ar_fhandle handle,
+                const void **fbuffer)
+{
+    return AR_EUNSUPPORTED;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+int32_t ar_funmap(const void *fbuffer)
+{
+    return AR_EUNSUPPORTED;
+}
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 int32_t ar_fseek(_In_ ar_fhandle handle,
