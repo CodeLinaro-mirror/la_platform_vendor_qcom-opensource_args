@@ -37,10 +37,9 @@
 #include "ats_fts.h"
 #include "ats_mcs.h"
 #include "ats_adie_rtc.h"
-#include "ats_server.h"
 #include "ats_common.h"
 #include "acdb_utility.h"
-#include "actp.h"
+#include "ats_transport_api.h"
 
 /* ---------------------------------------------------------------------------
  * Type Declarations
@@ -60,7 +59,7 @@ typedef struct ats_registry_table_t {
 /* ---------------------------------------------------------------------------
  * Global Variables
  *--------------------------------------------------------------------------- */
-uint8_t *ats_main_buffer                    = NULL;
+AtsBuffer ats_main_buffer					= {0};
 ATS_SIM_CALLBACK ats_simulation_callback    = NULL;
 bool_t simulation_enabled                   = FALSE;
 static AtsRegistryTable *g_ats_reg_tbl      = NULL;
@@ -135,25 +134,7 @@ int32_t ats_init(void)
 	/*-----------------------------------------------------
 	 *				Initialize ATS Transports
 	 *---------------------------------------------------*/
-#if !defined(ATS_OTTP)
-	status = actp_diag_init(ats_execute_command);
-	if (AR_FAILED(status))
-	{
-		ATS_ERR("Error[%d]: Failed to initialize Diag", status);
-	}
-#endif
-#if defined(ATS_OTTP) || defined(_DEVICE_SIM)
-	/* TODO: ATS TCPIP Server only works for OTTP. Gateway
-	 * Server is needed on target in order to work on other
-	 * platforms */
-	status = ats_server_init(ats_execute_command);
-	if (AR_FAILED(status))
-	{
-		ATS_ERR("Error[%d]: Failed to initialize "
-			"ATS TCP/IP Server", status);
-	}
-#endif
-
+	status = ats_transport_init(ats_execute_command);
 	if (AR_FAILED(status))
 	{
 		/* Dont initialize any of the services if any of
@@ -162,13 +143,14 @@ int32_t ats_init(void)
 		goto end;
 	}
 
-	if (NULL == ats_main_buffer)
+	if (NULL == ats_main_buffer.buffer)
 	{
-		ats_main_buffer = (uint8_t*)ACDB_MALLOC(
-			uint8_t, ATS_ACDB_BUFFER_POSITION + ATS_BUFFER_LENGTH);
+		ats_main_buffer.buffer_size = ATS_ACDB_BUFFER_POSITION + ATS_BUFFER_LENGTH;
+		ats_main_buffer.buffer = (uint8_t*)ACDB_MALLOC(
+			uint8_t, ats_main_buffer.buffer_size);
 		g_ats_reg_tbl = (AtsRegistryTable*)ACDB_MALLOC(AtsRegistryTable, 1);
 
-		if (NULL == ats_main_buffer || NULL == g_ats_reg_tbl)
+		if (NULL == ats_main_buffer.buffer || NULL == g_ats_reg_tbl)
 		{
 			status = AR_ENOMEMORY;
 			ATS_ERR("Error[%d]: Failed to allocate memory for "
@@ -246,10 +228,10 @@ core_service_deinit:
 online_deinit:
 	ats_online_deinit();
 release_resources:
-	if (NULL != ats_main_buffer)
+	if (NULL != ats_main_buffer.buffer)
 	{
-		ACDB_FREE(ats_main_buffer);
-		ats_main_buffer = NULL;
+		ACDB_FREE(ats_main_buffer.buffer);
+		ats_main_buffer.buffer = NULL;
 	}
 	if (NULL != g_ats_reg_tbl)
 	{
@@ -286,10 +268,10 @@ int32_t ats_deinit(void)
 		return status;
 	}
 
-	if (NULL != ats_main_buffer)
+	if (NULL != ats_main_buffer.buffer)
 	{
-		ACDB_FREE(ats_main_buffer);
-		ats_main_buffer = NULL;
+		ACDB_FREE(ats_main_buffer.buffer);
+		ats_main_buffer.buffer = NULL;
 	}
 
 	{
@@ -312,19 +294,15 @@ int32_t ats_deinit(void)
 		}
 	}
 
+	// Deinitializes services
     (void)ats_online_deinit();
     (void)ats_rtc_deinit();
     (void)ats_fts_deinit();
     (void)ats_mcs_deinit();
     (void)ats_adie_rtc_deinit();
-#if defined(ATS_OTTP) || defined(_DEVICE_SIM)
-    //TODO: ATS TCPIP Server only works for OTTP. Gateway Server is needed
-    //on target in order to work on other platforms.
-    (void)ats_server_deinit();
-#endif
-#if !defined(ATS_OTTP)
-    (void)actp_diag_deinit();
-#endif
+
+	// Deinitializes transport(s)
+	(void)ats_transport_deinit();
 
 	if (NULL != g_ats_reg_tbl)
 	{
@@ -379,15 +357,15 @@ void ats_execute_command(uint8_t *req_buf_ptr,
 	uint32_t resp_buf_size = ATS_BUFFER_LENGTH
 		- ATS_ACDB_BUFFER_POSITION - sizeof(status);
 
-	if (!ats_main_buffer)
+	if (!ats_main_buffer.buffer)
 	{
 		*resp_buf_ptr = NULL;
 		*resp_buf_length = 0;
 		return;
 	}
 
-	*resp_buf_ptr = ats_main_buffer;
-	temp_resp_buf = ats_main_buffer + ATS_ACDB_BUFFER_POSITION;
+	*resp_buf_ptr = ats_main_buffer.buffer;
+	temp_resp_buf = ats_main_buffer.buffer + ATS_ACDB_BUFFER_POSITION;
     char svc_id_str[ATS_SEVICE_ID_STR_LEN] = { 0 };
 	if (FALSE == get_command_length(req_buf_ptr, req_buf_length, &data_length))
 	{
@@ -435,7 +413,7 @@ void ats_execute_command(uint8_t *req_buf_ptr,
                         service_id != ATS_CODEC_RTC_SERVICE_ID))
                 {
                     status = ats_simulation_callback(req_buf_length, req_buf_ptr,
-                        resp_buf_length, ats_main_buffer);
+                        resp_buf_length, ats_main_buffer.buffer);
 
                     /* The recorded packet response already contains the status
                      * so there is no need to call ats_create_suc_resp.

@@ -28,7 +28,9 @@ extern "C" {
 /*-----------------------------------------------------------------------------
 ** flag, page size, and buffer length definition for ats_main_buffer
 *----------------------------------------------------------------------------*/
+#define ATS_1_KB                            1024UL
 #define ATS_BUFFER_LENGTH                   0x200000
+#define ATS_MIN_BUFFER_LENGTH               ATS_1_KB * 32UL
 #define ATS_HEADER_LENGTH                   8
 
 #define ATS_SERVICE_COMMAND_ID_LENGTH       4
@@ -113,7 +115,7 @@ break; \
 typedef struct _ats_buffer_t AtsBuffer;
 struct _ats_buffer_t
 {
-    uint32_t max_size;
+    uint32_t buffer_size;
     uint8_t *buffer;
 };
 
@@ -129,7 +131,7 @@ struct _ats_buffer_man_t
 };
 
 extern AtsBufferManager *ats_buffer_manager;
-extern uint8_t *ats_main_buffer;
+extern AtsBuffer ats_main_buffer;
 
 //TODO: Move to bottom of file
 //void GetBufferManager(AtsBufferManager** buffer_man)
