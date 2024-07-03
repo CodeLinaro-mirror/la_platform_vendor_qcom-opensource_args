@@ -214,10 +214,8 @@ static int32_t gsl_command_hw_rsc_custom_config(const uint8_t *payload,
 		payload_size);
 	*(uint32_t *)module_param = PRM_MODULE_INSTANCE_ID;
 
-	if (buff) {
-		gsl_hw_rsc_ctxt.rsp_buff = buff;
-		gsl_hw_rsc_ctxt.rsp_buff_sz = *buff_size;
-	}
+	gsl_hw_rsc_ctxt.rsp_buff = buff;
+	gsl_hw_rsc_ctxt.rsp_buff_sz = (buff && buff_size) ? *buff_size : 0;
 
 	GSL_LOG_PKT("send_pkt", GSL_HW_RSC_SRC_PORT, send_pkt, sizeof(*send_pkt) +
 		sizeof(*cmd_header) + GSL_ALIGN_8BYTE(payload_size), NULL, 0);
@@ -225,7 +223,7 @@ static int32_t gsl_command_hw_rsc_custom_config(const uint8_t *payload,
 	if (rc)
 		GSL_ERR("hw rsc cmd 0x%x failed:%d", cmd, rc);
 
-	if (buff)
+	if (buff && buff_size)
 		*buff_size = gsl_hw_rsc_ctxt.rsp_buff_sz;
 exit:
 	GSL_MUTEX_UNLOCK(gsl_hw_rsc_ctxt.rsc_lock);
