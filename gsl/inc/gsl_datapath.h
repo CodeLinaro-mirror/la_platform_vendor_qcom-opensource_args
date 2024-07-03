@@ -106,8 +106,8 @@ struct gsl_data_path_info {
 	 * is used (not with GSL), when clear indicates buffer is available
      * (with GSL)
 	 *
-	 * bit pos 0: indicates buffer number 0 is used or avialable
-	 * bit pos 1: indicates buffer number 1 is used or avialable
+	 * bit pos 0: indicates buffer number 0 is used or available
+	 * bit pos 1: indicates buffer number 1 is used or available
 	 * . . .
 	 * bit pos num_buffs - 1: buffer number (num_buffs - 1) is used or avail
 	 */
@@ -325,6 +325,15 @@ int32_t gsl_dp_get_pos_buff_info(struct gsl_data_path_info *dp_info,
  * \return the number of processed buffers
  */
 uint32_t gsl_dp_get_processed_buff_cnt(struct gsl_data_path_info *dp_info);
+
+/**
+ * \brief get available buffer size for a graph path
+ *
+ * \param[in] dp_info: pointer to a datapath
+ *
+ * \return the size of available buffer (in bytes)
+ */
+uint32_t gsl_dp_get_avail_buffer_size(struct gsl_data_path_info *dp_info);
 
 /**
  * \brief wait for all buffers to come back on a datapath

@@ -2400,6 +2400,30 @@ uint32_t gsl_dp_get_processed_buff_cnt(struct gsl_data_path_info *dp_info)
 	return dp_info->processed_buf_cnt;
 }
 
+uint32_t gsl_dp_get_avail_buffer_size(struct gsl_data_path_info *dp_info)
+{
+	uint32_t buff_used_status = 0;
+	uint32_t available_buff_cnt = 0;
+	uint32_t available_bytes = 0;
+
+	if (!dp_info)
+		return AR_EBADPARAM;
+
+	GSL_MUTEX_LOCK(dp_info->lock);
+	available_buff_cnt = dp_info->config.num_buffs;
+	buff_used_status = dp_info->buff_used_status;
+	for (int i = 0; i < dp_info->config.num_buffs && buff_used_status != 0; i++) {
+		if (buff_used_status % 2 == 1)
+			available_buff_cnt--;
+		buff_used_status >>= 1;
+	}
+
+	available_bytes = available_buff_cnt * dp_info->config.buff_size;
+	GSL_MUTEX_UNLOCK(dp_info->lock);
+
+	return available_bytes;
+}
+
 static void gsl_clear_internal_buf(struct gsl_data_path_info *dp_info)
 {
 	uint8_t i = 0;

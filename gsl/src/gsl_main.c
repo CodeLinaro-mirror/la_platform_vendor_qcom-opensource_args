@@ -2318,6 +2318,28 @@ int32_t gsl_get_processed_buff_cnt(gsl_handle_t graph_handle,
 	return AR_EOK;
 }
 
+int32_t gsl_get_avail_buffer_size(gsl_handle_t graph_handle, enum gsl_data_dir dir,
+	uint32_t *bytes)
+{
+	struct gsl_graph *graph;
+
+	/* no need to synchronize with rtgm as it doesnt do anything with spf */
+
+	graph = to_gsl_graph(graph_handle);
+	if (!graph)
+		return AR_EBADPARAM;
+
+	if (gsl_graph_get_state(graph) == GRAPH_ERROR)
+		return AR_ESUBSYSRESET;
+
+	if (dir == GSL_DATA_DIR_READ)
+		*bytes = gsl_dp_get_avail_buffer_size(&graph->read_info);
+	else
+		*bytes = gsl_dp_get_avail_buffer_size(&graph->write_info);
+
+	return AR_EOK;
+}
+
 int32_t gsl_add_database(struct gsl_acdb_data_files *acdb_data_files,
 	struct gsl_acdb_file *writable_file_path,
 	gsl_acdb_handle_t *acdb_handle)

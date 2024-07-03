@@ -1070,6 +1070,23 @@ int32_t gsl_get_processed_buff_cnt(gsl_handle_t graph_handle,
 	enum gsl_data_dir dir, uint32_t *cnt);
 
 /**
+ * \brief Get the size of available buffer (in bytes) ready to be written (playback) / read
+ * (capture)
+ *
+ * For playback case, returns the size of empty buffer (in bytes) for GSL clients to write.
+ * For capture case, returns the size of buffer (in bytes) that GSL clients can queue to SPF
+ * for read.
+ *
+ * \param[in] graph_handle: graph handle
+ * \param[in] dir: indicates whether to return write or read available buffer size
+ * \param[out] bytes: buffer size (in bytes) ready to be written (playback) / read (capture)
+ *
+ * \return AR_EOK in success, error code otherwise.
+ */
+int32_t gsl_get_avail_buffer_size(gsl_handle_t graph_handle, enum gsl_data_dir dir,
+	uint32_t *bytes);
+
+/**
  * \brief Get driver data
  *
  * This API is to be called by GSL clients for querying any driver specific
