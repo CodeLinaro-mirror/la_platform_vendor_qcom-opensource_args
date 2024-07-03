@@ -215,7 +215,7 @@ unload_file:
 * ioctl command implementations
 *--------------------------------------------------------------------------- */
 
-int32_t acdb_init_layers()
+int32_t acdb_init_layers(void)
 {
     int32_t status = AR_EOK;
 
@@ -541,7 +541,7 @@ int32_t acdb_init_remove_database(acdb_handle_t *acdb_handle)
 	return status;
 }
 
-int32_t acdb_init_reset()
+int32_t acdb_init_reset(void)
 {
 	int32_t status = AR_EOK;
 

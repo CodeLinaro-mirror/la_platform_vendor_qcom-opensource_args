@@ -88,7 +88,7 @@ static AcdbDeltaPersistState acdb_delta_persist_state;
 * Private Functions
 *--------------------------------------------------------------------------- */
 
-int32_t AcdbDeltaInit()
+int32_t AcdbDeltaInit(void)
 {
     int32_t status = AR_EOK;
 
@@ -199,7 +199,7 @@ int32_t AcdbDeltaRemoveDatabase(acdb_delta_file_man_handle_t *dfm_handle)
     return status;
 }
 
-int32_t AcdbDeltaDataCmdReset()
+int32_t AcdbDeltaDataCmdReset(void)
 {
     int32_t status = AR_EOK;
     AcdbDeltaFileManDatabaseInfo* db_info = NULL;
@@ -281,7 +281,7 @@ int32_t AcdbDeltaDataCmdGetDeltaVersion(uint32_t findex, uint32_t *delta_major, 
 	return result;
 }
 
-int32_t AcdbDeltaDataCmdSave()
+int32_t AcdbDeltaDataCmdSave(void)
 {
 	int32_t status = AR_EOK;
     ar_fhandle *fhandle = NULL;
@@ -703,7 +703,7 @@ end:
 * Public Functions
 *--------------------------------------------------------------------------- */
 
-int32_t acdb_delta_data_is_persist_enabled()
+int32_t acdb_delta_data_is_persist_enabled(void)
 {
     return (int32_t)acdb_delta_persist_state;
 }

@@ -5889,7 +5889,7 @@ int32_t AcdbCmdGetSubgraphCalDataNonPersist(AcdbSgIdCalKeyVector *req,
 
         if (AR_FAILED(status) && !has_cal_data)
         {
-            ACDB_DBG("Error[%d]: Unable to retrieve calibration data for "
+            ACDB_DBG("Warning[%d]: Unable to retrieve calibration data for "
                 "Subgraph(%x). Skipping..", status,
                 sg_cal_lut_header.subgraph_id);
             status = AR_EOK;
@@ -7858,7 +7858,7 @@ int32_t AcdbGetSupbgraphCalPersist(
             *blob_offset -= sizeof(AcdbSgIdPersistData);
 
         if (info->op == ACDB_OP_GET_SIZE)
-            ACDB_DBG("Error[%d]: Unable to retrieve calibration data for "
+            ACDB_DBG("Warning[%d]: Unable to retrieve calibration data for "
                 "Subgraph(%x). Skipping..", status,
                 info->subgraph_id);
     }
@@ -8210,7 +8210,7 @@ int32_t AcdbCmdGetProcSubgraphCalDataPersist(
     (void)GetOffloadedParamList(&info.offloaded_parameter_list);
     if (info.offloaded_parameter_list.count == 0)
     {
-        ACDB_DBG("Error[%d]: No offloaded parameters found. Skipping..",
+        ACDB_DBG("Warning[%d]: No offloaded parameters found. Skipping..",
             status);
     }
 
@@ -8237,7 +8237,7 @@ int32_t AcdbCmdGetProcSubgraphCalDataPersist(
             &info, &blob_offset, rsp);
         if (status == AR_ENOTEXIST)
         {
-            ACDB_DBG("Error[%d]: No calibration found for Subraph(0x%x)",
+            ACDB_DBG("Warning[%d]: No calibration found for Subraph(0x%x)",
                 status, info.subgraph_id);
             status = AR_EOK;
             continue;

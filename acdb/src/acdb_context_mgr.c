@@ -72,7 +72,7 @@ static AcdbCtxManContext acdb_ctx_man_context;
 * Private functions
 *--------------------------------------------------------------------------- */
 
-int32_t acdb_ctx_man_init()
+int32_t acdb_ctx_man_init(void)
 {
     int32_t status = AR_EOK;
 
@@ -185,7 +185,7 @@ int32_t acdb_ctx_man_remove_database(acdb_handle_t *handle)
     return status;
 }
 
-int32_t acdb_ctx_man_reset()
+int32_t acdb_ctx_man_reset(void)
 {
     int32_t status = AR_EOK;
     acdb_context_handle_t *db_info = NULL;
@@ -489,17 +489,17 @@ int32_t acdb_ctx_man_set_handle_using_driver_module(
 * Public Functions
 *--------------------------------------------------------------------------- */
 
-acdb_context_handle_t *acdb_ctx_man_get_active_handle()
+acdb_context_handle_t *acdb_ctx_man_get_active_handle(void)
 {
     return acdb_ctx_man_context.active_db;
 }
 
-ar_osal_mutex_t acdb_ctx_man_get_client_lock()
+ar_osal_mutex_t acdb_ctx_man_get_client_lock(void)
 {
     return acdb_ctx_man_context.acdb_client_lock;
 }
 
-uint32_t acdb_ctx_man_get_database_count()
+uint32_t acdb_ctx_man_get_database_count(void)
 {
     return acdb_ctx_man_context.database_count;
 }

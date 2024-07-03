@@ -57,7 +57,6 @@ int32_t acdb_delta_parser_read_file_header(
 	if (AR_EOK != file_seek_read(fhandle, file_header,
 		sizeof(AcdbDeltaFileHeader), &offset))
 	{
-		//ACDB_ERR(__FUNCTION__, NULL, 0);
 		return AR_EFAILED;
 	}
 
@@ -78,7 +77,7 @@ int32_t acdb_delta_parser_verify_file_version(
 	}
 	else
 	{
-		ACDB_ERR(__FUNCTION__, " Unsupported delta file version %d.%d.%d",
+		ACDB_ERR("Unsupported delta file version %d.%d.%d",
 			header->delta_major, header->delta_minor, header->delta_revision);
 		status = ACDB_PARSE_INVALID_FILE;
 	}
@@ -156,7 +155,7 @@ int32_t acdb_delta_parser_get_file_version(
 
 	if (AR_EOK != acdb_delta_parser_read_file_header(fhandle, &file_header))
 	{
-		ACDB_ERR(__FUNCTION__, " failed with error code %d. Failed to read delta file header.")
+		ACDB_ERR("failed with error code %d. Failed to read delta file header.")
 		return AR_EFAILED;
 	}
 

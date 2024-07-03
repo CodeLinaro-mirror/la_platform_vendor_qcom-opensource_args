@@ -117,7 +117,7 @@ typedef enum acdb_ctx_manager_command_t
 * \return a pointer to the active context handle, or
 *		  NULL if the context manager is not initialized
 */
-acdb_context_handle_t *acdb_ctx_man_get_active_handle();
+acdb_context_handle_t *acdb_ctx_man_get_active_handle(void);
 
 /**
 * \brief
@@ -126,7 +126,7 @@ acdb_context_handle_t *acdb_ctx_man_get_active_handle();
 * \return a pointer to the active context handle, or
 *		  NULL if the context manager is not initialized
 */
-ar_osal_mutex_t acdb_ctx_man_get_client_lock();
+ar_osal_mutex_t acdb_ctx_man_get_client_lock(void);
 
 /**
 * \brief
@@ -134,7 +134,7 @@ ar_osal_mutex_t acdb_ctx_man_get_client_lock();
 *
 * \return the number of databases
 */
-uint32_t acdb_ctx_man_get_database_count();
+uint32_t acdb_ctx_man_get_database_count(void);
 
 /**
 * \brief

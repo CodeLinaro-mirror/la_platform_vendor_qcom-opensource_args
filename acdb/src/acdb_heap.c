@@ -488,7 +488,7 @@ int32_t acdb_stack_pop(LinkedList* stack, LinkedListNode** node)
     return 0;
 }
 
-KVSubgraphMapBin *acdb_heap_create_map_bin()
+KVSubgraphMapBin *acdb_heap_create_map_bin(void)
 {
     KVSubgraphMapBin *bin = ACDB_MALLOC(KVSubgraphMapBin, 1);
 
@@ -810,7 +810,7 @@ int32_t acdb_heap_get_bin(acdb_heap_handle_t handle,
 * IOCTL Command Functions
 *--------------------------------------------------------------------------- */
 
-int32_t acdb_heap_init()
+int32_t acdb_heap_init(void)
 {
     int32_t status = AR_EOK;
 
@@ -1176,7 +1176,7 @@ int32_t acdb_heap_clear(acdb_heap_handle_t handle)
     return AR_EOK;
 }
 
-int32_t acdb_heap_reset()
+int32_t acdb_heap_reset(void)
 {
     int32_t status = AR_EOK;
     AcdbHeapInfo *db_info = NULL;

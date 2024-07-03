@@ -62,7 +62,7 @@ struct _acdb_delta_data_swap_info_t
  * Function Declarations and Documentation
  *--------------------------------------------------------------------------- */
 
-int32_t acdb_delta_data_is_persist_enabled();
+int32_t acdb_delta_data_is_persist_enabled(void);
 
 int32_t acdb_delta_data_ioctl(uint32_t cmd_id,
 void *req, uint32_t req_size,

@@ -298,7 +298,7 @@ int32_t AcdbFileManValidateImExShSubgraphs(
     return status;
 }
 
-int32_t AcdbFileManValidateSharedSubgraphs()
+int32_t AcdbFileManValidateSharedSubgraphs(void)
 {
     int32_t status = AR_EOK;
     bool_t has_exports = FALSE;
@@ -477,7 +477,7 @@ int32_t AcdbFileManGetDirectoryFromFilePath(const char* fpath, uint32_t fpath_le
 * functions that use the global variables
 *--------------------------------------------------------------------------- */
 
-int32_t AcdbFileManInit()
+int32_t AcdbFileManInit(void)
 {
     int32_t status = AR_EOK;
 
@@ -746,7 +746,7 @@ int32_t AcdbFileManRemoveDatabase(acdb_file_man_handle_t *fm_handle)
     return status;
 }
 
-int32_t AcdbFileManReset()
+int32_t AcdbFileManReset(void)
 {
     int32_t status = AR_EOK;
     AcdbFileManDatabaseInfo* db_info = NULL;
