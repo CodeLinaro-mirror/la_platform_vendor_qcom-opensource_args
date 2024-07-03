@@ -124,6 +124,8 @@ spf_sources = ./api/apm/apm_api.h \
                 ./api/modules/wr_sh_mem_client_api.h \
                 ./api/modules/wr_sh_mem_ep_api.h \
                 ./api/modules/wsa_haptics_vi_api.h \
+                ./api/modules/congestion_buf_api.h \
+                ./api/modules/jitter_buf_api.h \
                 ./api/vcpm/vcpm_api.h
 
 spf_includedir = $(includedir)/spf
