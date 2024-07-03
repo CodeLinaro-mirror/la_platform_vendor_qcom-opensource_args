@@ -76,6 +76,7 @@ typedef enum adie_chipset_id_t
     SLATE = 32,
     BESBEV = 33,
     WCD939X = 34,
+    WCD9378 = 35,
     CODEC_UNDEFINED = ((uint16_t)-1)
 }adie_chipset_id_t;
 
