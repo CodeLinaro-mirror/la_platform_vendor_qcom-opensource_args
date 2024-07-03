@@ -705,8 +705,9 @@ GPR_INTERNAL uint32_t gpr_local_send(uint32_t domain_id __UNUSED, void *buf, uin
 
    if (AR_ENOTEXIST == result)
    {
-      AR_MSG(DBG_ERROR_PRIO, "Session not found, calling default dispatch function");
-      rc = gpr_drv_default_callback_fn(packet);
+      AR_MSG(DBG_ERROR_PRIO, "Session not found, returning");
+      /*GPR will return error to the caller if session is not found to ensure synchronous error reporting*/
+      rc = AR_ENOTEXIST;
    }
    else if ((NULL != session) && (NULL != session->callback_fn))
    {
@@ -732,12 +733,6 @@ GPR_INTERNAL uint32_t gpr_local_receive_done(uint32_t domain_id __UNUSED, void *
    __UNREFERENCED_PARAM(domain_id);
    __UNREFERENCED_PARAM(buf);
 
-   return AR_EOK;
-}
-
-uint32_t gpr_drv_default_callback_fn(gpr_packet_t *packet)
-{
-   __gpr_cmd_end_command(packet, AR_EFAILED /*status*/);
    return AR_EOK;
 }
 

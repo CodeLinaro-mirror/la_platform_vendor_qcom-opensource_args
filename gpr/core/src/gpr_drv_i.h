@@ -129,8 +129,6 @@ GPR_INTERNAL uint32_t gpr_local_send(uint32_t domain_id, void *buf, uint32_t len
 
 GPR_INTERNAL uint32_t gpr_local_receive_done(uint32_t domain_id, void *buf);
 
-uint32_t gpr_drv_default_callback_fn(gpr_packet_t *packet);
-
 void gpr_drv_isr_lock_fn(void);
 
 void gpr_drv_isr_unlock_fn(void);

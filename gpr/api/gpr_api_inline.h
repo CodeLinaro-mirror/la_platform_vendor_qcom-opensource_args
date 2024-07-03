@@ -393,13 +393,9 @@ uint32_t __gpr_cmd_get_gpr_packet_info_v2(uint32_t *num_packet_pools, gpr_packet
   __gpr_cmd_alloc_send().
   @par
   Before calling this function, use __gpr_cmd_alloc() or __gpr_cmd_alloc_ext()
-  to allocate free messages for sending. If delivery fails, the caller can try
-  to resend the messages or abort and free messages.
+  to allocate free messages for sending.  If delivery fails, the caller must
+  either try to resend the messages or abort-and-free the messages
 
-  @par Notes
-  The sender must always anticipate failures, even when this function returns no
-  errors. The #GPR_IBASIC_RSP_RESULT response messages are to be checked for
-  any error statuses that are returned.
   @par
   The sender can locally abort any remotely pending operations by implementing
   timeouts. The sender must still expect and handle receipt of response messages
@@ -502,7 +498,7 @@ uint32_t __gpr_cmd_alloc(uint32_t alloc_size, gpr_packet_t **ret_packet);
                           returned by this function.
 
   @detdesc
-  This function allocates a packet from the GPR's free packet queue from the specified heap. 
+  This function allocates a packet from the GPR's free packet queue from the specified heap.
   It provides the caller with low-level control over the allocation process.
   @par
   For general use, consider using a simplified helper function, such as
@@ -657,7 +653,7 @@ alloc_args.src_port = GPR_CLIENT_SERVICE_PORT_ID_SOURCE;
 alloc_args.dst_domain_id = GPR_CLIENT_SERVICE_DOMAIN_ID_DESTINATION;
 alloc_args.dst_port = GPR_CLIENT_SERVICE_PORT_ID_DESTINATION;
 alloc_args.token = 0x12345678;
-alloc_args.heap_index = GPR_HEAP_INDEX_DEFAULT; 
+alloc_args.heap_index = GPR_HEAP_INDEX_DEFAULT;
 alloc_args.opcode = TEST_CLIENT_CMD_FUNCTION;
 alloc_args.payload_size = sizeof( test_client_cmd_function_t );
 alloc_args.ret_packet = &packet_ptr;
