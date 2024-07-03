@@ -25,6 +25,59 @@
 #include "acdb_parser.h"
 #include <time.h>
 
+int32_t AcbdInitLoadInMemFile(const char_t* fname, ar_fhandle fhandle, acdb_buffer_t* in_mem_file)
+{
+    in_mem_file->size = (uint32_t)ar_fsize(fhandle);
+
+    if (in_mem_file->size == 0)
+    {
+        ACDB_ERR("Error[%d]: The file %s is empty", AR_EBADPARAM, fname);
+        return AR_EBADPARAM;
+    }
+
+    int32_t status = ar_fmap(fhandle, &in_mem_file->buffer);
+    if (AR_EUNSUPPORTED == status)
+    {
+        in_mem_file->buffer = (void*)ACDB_MALLOC(uint8_t, in_mem_file->size);
+
+        if (IsNull(in_mem_file->buffer))
+        {
+            ACDB_ERR("Error[%d]: Not enough memory to allocate for file %s", AR_ENOMEMORY, fname);
+            return AR_ENOMEMORY;
+        }
+        status = AR_EOK;
+    }
+    else if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Failed to map memory for file %s", status, fname);
+    }
+
+    return status;
+}
+
+int32_t AcbdInitUnloadInMemFile(acdb_buffer_t* in_mem_file)
+{
+    if (IsNull(in_mem_file))
+    {
+        ACDB_ERR("Error[%d]: in_mem_file pointer is null", AR_EBADPARAM);
+        return AR_EBADPARAM;
+    }
+
+    in_mem_file->size = 0;
+
+    int32_t status = ar_funmap(in_mem_file->buffer);
+    if (AR_EUNSUPPORTED == status)
+    {
+        ACDB_FREE(in_mem_file->buffer);
+    }
+    else if (AR_FAILED(status))
+    {
+        ACDB_ERR("Error[%d]: Failed to unmap memory for in_mem_file", status);
+    }
+
+    return status;
+}
+
 void AcdbLogSwVersion(uint32_t major, uint32_t minor, uint32_t revision, uint32_t cpl)
 {
 	ACDB_PKT_LOG_DATA("ACDB_SW_MAJOR", &(major), sizeof(major));
@@ -156,22 +209,11 @@ int32_t AcdbInitUtilGetFileData(const char_t* fname, ar_fhandle* fhandle,
         return AR_EFAILED;
     }
 
-    in_mem_file->size = (uint32_t)ar_fsize(*fhandle);
-    if (in_mem_file->size != 0)
+    status = AcbdInitLoadInMemFile(fname, *fhandle, in_mem_file);
+    if (AR_FAILED(status))
     {
-        in_mem_file->buffer = (void*)
-            ACDB_MALLOC(uint8_t, in_mem_file->size);
-        if (IsNull(in_mem_file->buffer))
-        {
-            ACDB_ERR("Error[%d]: Not enough memory to "
-                "allocate for file %s", AR_ENOMEMORY, fname);
-            return AR_ENOMEMORY;
-        }
-    }
-    else
-    {
-        ACDB_ERR("Error[%d]: The file %s is empty", status, fname);
-        return AR_EFAILED;
+        ACDB_ERR("ERROR[%d]: Failed to load in_mem_file %s", status, fname);
+        return status;
     }
 
     status = ar_fread(*fhandle, in_mem_file->buffer, in_mem_file->size, &bytes_read);
@@ -191,8 +233,7 @@ int32_t AcdbInitUtilGetFileData(const char_t* fname, ar_fhandle* fhandle,
 end:
     if (AR_FAILED(status))
     {
-        in_mem_file->size = 0;
-        ACDB_FREE(in_mem_file->buffer);
+        AcbdInitUnloadInMemFile(in_mem_file);
     }
 
     return status;

@@ -719,7 +719,7 @@ int32_t AcdbFileManRemoveDatabase(acdb_file_man_handle_t *fm_handle)
     if (!IsNull(db_info->file_handle))
         (void)ar_fclose(db_info->file_handle);
 
-    ACDB_FREE(db_info->database_cache);
+    AcbdInitUnloadInMemFile(db_info->database_cache);
     ACDB_FREE(db_info);
 
     if (!IsNull(ws_info))

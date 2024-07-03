@@ -127,4 +127,30 @@ int32_t AcdbInitUtilGetDeltaInfo2(acdb_path_t* delta_file_path,
 int32_t AcdbInitUtilOpenDeltaFile(
     AcdbInitUtilDeltaInfo *info, ar_fhandle* delta_fhandle);
 
+/**
+*	\brief
+*		Loads the acdb file from the file handle as a read only buffer
+*
+*   \param[in] fname: The acdb file name
+*	\param[in] fhandle: The acdb file handle
+*	\param[out] in_mem_file: The pointer to the read only buffer
+*	\return AR_EOK on success and an error otherwise
+*
+*   \sa
+*   acdb_init_utility
+*/
+int32_t AcbdInitLoadInMemFile(const char_t* fname, ar_fhandle fhandle, acdb_buffer_t* in_mem_file);
+
+/**
+*	\brief
+*		Unloads an previously loaded acdb file and frees
+*       any resources used by the readonly buffer
+*
+*	\param[in] in_mem_file: The pointer to the read only buffer
+*	\return AR_EOK on success and an error otherwise
+*
+*   \sa
+*   acdb_init_utility
+*/
+int32_t AcbdInitUnloadInMemFile(acdb_buffer_t* in_mem_file);
 #endif /* __ACDB_INIT_UTILITY_H__ */
