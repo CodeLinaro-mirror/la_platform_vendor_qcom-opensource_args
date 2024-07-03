@@ -184,9 +184,11 @@ typedef enum AcdbGlobalProperty
 /* ---------------------------------------------------------------------------
 * Type Declarations
 *--------------------------------------------------------------------------- */
-
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable: 4200)
+#endif
+
 typedef struct acdb_file_version_t
 {
     /**< The file major version */
@@ -240,7 +242,9 @@ typedef struct acdb_header_v1_t
     acdb_oem_info_t* oem_info;
 }acdb_header_v1_t;
 
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 /* ---------------------------------------------------------------------------
 * Function Declarations and Documentation
 *--------------------------------------------------------------------------- */

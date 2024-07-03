@@ -2201,7 +2201,7 @@ int32_t acdb_add_database(AcdbDatabaseFiles* acdb_files,
 /**
 * \brief
 *       Shrinks the database by removing all data associated with the given
-*       database handle at runtime. This includes database files (*.qwsp/*.acdb) and heap data
+*       database handle at runtime. This includes database files (*.qwsp or *.acdb) and heap data
 * \param[in] acdb_handle: A handle to the database to remove
 * \return 0 on success, non-zero on failure
 */

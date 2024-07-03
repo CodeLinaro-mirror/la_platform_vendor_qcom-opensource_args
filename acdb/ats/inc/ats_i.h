@@ -1155,9 +1155,9 @@ struct ats_cmd_mcs_play_record_req_t
 \{ */
 
 /**
-    Start a playback session with the provided usecase, calibration, and 
-    audio file. This provides the same functionality as ATS_CMD_MCS_PLAY 
-    except that it allows the client to apply calibration, tag config, and 
+    Start a playback session with the provided usecase, calibration, and
+    audio file. This provides the same functionality as ATS_CMD_MCS_PLAY
+    except that it allows the client to apply calibration, tag config, and
     tag custom config data before starting the usecase.
 
     See MCS_CMD_PLAY_2 in mcs_api.h for command/response input and output
@@ -1176,7 +1176,7 @@ struct ats_cmd_mcs_play_record_req_t
 
 /**
     Start a record session and save the output to the specified file using
-	the provided record usecase, duration, and calibration. This provides the 
+	the provided record usecase, duration, and calibration. This provides the
     same functionality as ATS_CMD_MCS_RECORD except that it allows the client
     to apply calibration, tag config, and tag custom config data before
 
@@ -2429,7 +2429,7 @@ typedef struct ats_cmd_get_all_db_file_sets_rsp_t
 \{ */
 
 /**
-*    Retrieves the specified database file (*.acdb/*.qwsp/etc..) for the
+*    Retrieves the specified database file (*.acdb or *.qwsp or etc..) for the
 *    given acdb handle.
 *
 *    The file is retrieved in pieces if its larger than the ATS buffer.

@@ -3633,7 +3633,7 @@ int32_t AcdbGetSubgraphList(uint32_t sg_list_offset,
     }
 
     subgraph_list_size = sg_list_header.size - sizeof(sg_list_header.num_subgraphs);
-    status = FileManGetFilePointer2(&subgraphs, offset);
+    status = FileManGetFilePointer2((void **)&subgraphs, offset);
 
 
     if (!IsNull(subgraph_list))
@@ -9145,7 +9145,6 @@ end:
 int32_t AcdbCmdSetCalData(AcdbSetCalDataReq *req)
 {
     int32_t status = AR_EOK;
-    bool_t found_sg = FALSE;
     bool_t is_data_set = FALSE;
     uint32_t offset = 0;
     uint32_t num_subgraph = 0;
@@ -9263,7 +9262,6 @@ int32_t AcdbCmdSetCalData(AcdbSetCalDataReq *req)
     subgraph_id = 0;
     for (uint32_t i = 0; i < graph.num_subgraphs; i++)
     {
-        found_sg = FALSE;
         subgraph_id = subgraph->sg_id;
         offset = ci_sg_cal_lut.chunk_offset + sizeof(uint32_t);
 
@@ -9585,8 +9583,7 @@ int32_t AcdbGetAmdbProcRegDeregData(
 
             if (proc_id == proc_reg_data.proc_id)
             {
-                status = FileManGetFilePointer2(
-                    &proc_reg_data.module_reg_data, offset);
+                status = FileManGetFilePointer2((void **)&proc_reg_data.module_reg_data, offset);
                 if (AR_FAILED(status))
                 {
                     ACDB_ERR("Error[%d]: Unable to get module reg "
@@ -9763,7 +9760,7 @@ int32_t AcdbGetAmdbBootLoadModuleData(
             return status;
         }
 
-        status = FileManGetFilePointer2(&proc_entry, offset);
+        status = FileManGetFilePointer2((void **)&proc_entry, offset);
         if (AR_FAILED(status))
         {
             ACDB_ERR("Error[%d]: Unable to read processor count.", status);
@@ -10235,7 +10232,7 @@ int32_t TaggedModuleMapLutFindFirstOfSubgraphID(
 int32_t GetTagsFromGkvGetSize(
     ChunkInfo *lut_chunk, ChunkInfo *def_chunk,
     AcdbUintList* subgraph_list,
-    ACDB_LIST(AcdbTagDefOffsetPair) *tag_defofst_list,
+    AcdbTagDefOffsetPairList *tag_defofst_list,
     AcdbCmdGetTagsFromGkvRsp* rsp)
 {
     int32_t status = AR_EOK;
@@ -10385,7 +10382,7 @@ int32_t GetTagsFromGkvGetSize(
 }
 
 int32_t GetTagsFromGkvGetData(
-    ACDB_LIST(AcdbTagDefOffsetPair) *tag_defofst_list,
+    AcdbTagDefOffsetPairList *tag_defofst_list,
     AcdbCmdGetTagsFromGkvRsp* rsp)
 {
     int32_t status = AR_EOK;
@@ -10537,7 +10534,7 @@ int32_t BuildGetTagsFromGkvRsp(AcdbUintList* subgraph_list,
     ChunkInfo ci_lut = { 0 };
     ChunkInfo ci_def = { 0 };
 
-    ACDB_LIST(AcdbTagDefOffsetPair) tag_defofst_list = { 0 };
+    AcdbTagDefOffsetPairList tag_defofst_list = { 0 };
     AcdbOp op = ACDB_OP_NONE;
 
     ci_lut.chunk_id = ACDB_CHUNKID_TAGGED_MODULE_LUT;

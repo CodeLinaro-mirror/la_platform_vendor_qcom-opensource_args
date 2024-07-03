@@ -146,7 +146,7 @@ int32_t acdb_ctx_man_add_database(acdb_context_handle_t *handle)
 int32_t acdb_ctx_man_remove_database(acdb_handle_t *handle)
 {
     int32_t status = AR_EOK;
-    uint32_t db_index = 0;
+    // uint32_t db_index = 0;
     acdb_context_handle_t* ctx_handle = NULL;
     uint32_t vm_id = 0;
 
@@ -163,7 +163,7 @@ int32_t acdb_ctx_man_remove_database(acdb_handle_t *handle)
 
         if (vm_id == acdb_ctx_man_context.database_info[i]->vm_id)
         {
-            db_index = ctx_handle->database_index;
+            // db_index = ctx_handle->database_index;
             acdb_ctx_man_context.database_info[i] = NULL;
             break;
         }
@@ -173,7 +173,7 @@ int32_t acdb_ctx_man_remove_database(acdb_handle_t *handle)
 
     ACDB_MUTEX_LOCK(acdb_ctx_man_context.ctx_man_lock);
 
-    //ACDB_BIT_UNSET(acdb_ctx_man_context.active_db_slots, db_index);
+    // ACDB_BIT_UNSET(acdb_ctx_man_context.active_db_slots, db_index);
 
     if (acdb_ctx_man_context.database_count > 0)
     {

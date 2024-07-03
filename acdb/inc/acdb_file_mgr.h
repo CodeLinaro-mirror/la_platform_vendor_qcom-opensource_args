@@ -61,7 +61,7 @@ enum AcdbFileManCmd {
     /**< Retrieves loaded *.acdb and *.qwsp file information for all the
     databases initialied through acdb_init(..) and acdb_add_database(...)) */
     ACDB_FILE_MAN_GET_ALL_DATABASE_FILE_SETS,
-    /**< Retrieves file data for the specified database file (*.qwsp/*.acdb) */
+    /**< Retrieves file data for the specified database file (*.qwsp or *.acdb) */
     ACDB_FILE_MAN_GET_DATABASE_FILE_SET,
     /**< Sets the writable path for the specified database */
     ACDB_FILE_MAN_SET_WRITABLE_PATH,

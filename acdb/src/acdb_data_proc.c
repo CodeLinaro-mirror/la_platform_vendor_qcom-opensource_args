@@ -2055,7 +2055,6 @@ int32_t DataProcGetSharedSubgraphGuid(uint32_t subgraph_id,
 {
     int32_t status = AR_EOK;
     uint32_t offset = 0;
-    uint32_t table_size = 0;
     bool_t found = FALSE;
     AcdbSharedSubgraphGuidTable subgraph_guid_table = { 0 };
     AcdbSharedSubgraphDataGuid *subgraph_guid_entry = NULL;
@@ -2096,9 +2095,6 @@ int32_t DataProcGetSharedSubgraphGuid(uint32_t subgraph_id,
     offset += sizeof(uint32_t);
     subgraph_guid_table.guid_entries = (AcdbSharedSubgraphDataGuid*)
         (im_ex_shared_sugraph_property.property_data + offset);
-
-    table_size = subgraph_guid_table.num_subgraphs
-        * sizeof(AcdbSharedSubgraphDataGuid);
 
     for (uint32_t i = 0; i < subgraph_guid_table.num_subgraphs; i++)
     {
@@ -2230,10 +2226,7 @@ int32_t DataProcGetSubgraphPdmMap(AcdbSubgraphPdmMap* map)
             map->size = found_map.size;
             if (found_map.size <= 0) continue;
 
-
-            status = FileManGetFilePointer1(
-                &map->proc_info,
-                found_map.size, &offset);
+            status = FileManGetFilePointer1((void **)&map->proc_info, found_map.size, &offset);
             if (AR_FAILED(status))
             {
                 ACDB_ERR("Error[%d]: Failed to read processor info", status);

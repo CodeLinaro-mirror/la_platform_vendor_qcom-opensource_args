@@ -975,7 +975,6 @@ int32_t AcdbFileManWriteLoadedFileInfo(
     AcdbFileManBlob *rsp, uint32_t *blob_offset)
 {
     int32_t status = AR_EOK;
-    uint32_t path_info_struct_size = 0;
     acdb_buffer_t path_info_struct = { 0 };
     acdb_path_t db_file = { 0 };
     AcdbFileManDbPathInfoV2 db_path_info_v2 = { 0 };
@@ -990,11 +989,9 @@ int32_t AcdbFileManWriteLoadedFileInfo(
     {
     case ACDB_FM_DB_PATH_INFO_VERSION_1:
         path_info_struct.buffer = (void*)&db_path_info_v1;
-        path_info_struct_size = sizeof(db_path_info_v1) - sizeof(intptr_t);
         break;
     case ACDB_FM_DB_PATH_INFO_VERSION_2:
         path_info_struct.buffer = (void*)&db_path_info_v2;
-        path_info_struct_size = sizeof(db_path_info_v2) - sizeof(size_t);
         break;
     default:
         status = AR_EBADPARAM;
@@ -1753,7 +1750,7 @@ int32_t acdb_fm_get_db_chunks(uint32_t count, ...)
         }
 
         if (IsNull(fm_handle))
-            AR_EHANDLE;
+            return AR_EHANDLE;
 
         status = acdb_get_db_chunk(fm_handle,
             ci->chunk_id, &ci->chunk_offset, &ci->chunk_size);

@@ -39,19 +39,6 @@
 of the smallest global buffer length GLB_BUF_3_LENGTH*/
 #define ACDB_MAX_KEY_COUNT (GLB_BUF_3_LENGTH/2)
 
-/**< List of elements of the specified type where the list is a pointer to an array of those elements */
-#define ACDB_LIST(type) struct _acdb_list_t \
-{\
-/**< Number of elemts in the list */\
-uint32_t count;\
-/**< Max number of elemts that this list can store */\
-uint32_t max_count;\
-/**< The size of an element. For example <uint a; uint b> is an element where the size is 8 bytes */\
-uint32_t element_size;\
-/**< Pointer to array of 'type' */\
-type *list;\
-}
-
 /*-----------------------------------------------------------------------------
 * Enums Types
 *----------------------------------------------------------------------------*/
@@ -750,5 +737,19 @@ typedef struct acdb_amdb_proc_bootup_data_t
     /**< List of module bootup loading/unload info */
     acdb_amdb_bootup_module_t load_unload_info[0];
 }acdb_amdb_proc_bootup_data_t;
+
+typedef struct _acdb_tag_def_offset_pair_list_t AcdbTagDefOffsetPairList;
+struct _acdb_tag_def_offset_pair_list_t
+{
+    /**< Number of elemts in the list */
+    uint32_t count;
+    /**< Max number of elemts that this list can store */
+    uint32_t max_count;
+    /**< The size of an element. For example <uint a; uint b> is an element where the size is 8
+     * bytes */
+    uint32_t element_size;
+    /**< Pointer to AcdbTagDefOffsetPair */
+    AcdbTagDefOffsetPair* list;
+};
 
 #endif /*__ACDB_TYPES_H__*/

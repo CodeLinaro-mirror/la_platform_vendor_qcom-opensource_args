@@ -152,7 +152,7 @@ int32_t acdb_remove_database(const acdb_handle_t *acdb_handle)
 	}
 
 	status = acdb_init_ioctl(ACDB_INIT_CMD_REMOVE_DATABASE,
-		acdb_handle, sizeof(acdb_handle_t), NULL, 0);
+		(acdb_handle_t)acdb_handle, sizeof(acdb_handle_t), NULL, 0);
 	if (AR_FAILED(status))
 	{
 		ACDB_ERR("Error[%d]: Unable to add files to database.", status);
