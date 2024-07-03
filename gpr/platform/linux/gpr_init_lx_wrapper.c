@@ -47,7 +47,7 @@
 /*****************************************************************************
  * Global variables                                                          *
  ****************************************************************************/
-/* GPR IPC table containing init,deinit functions for datalink layers depending on 
+/* GPR IPC table containing init,deinit functions for datalink layers depending on
 domains a given src domain wishes to establish a link with and the availability
 of shared memory */
 struct ipc_dl_v2_t gpr_lx_ipc_dl_table[GPR_PL_NUM_TOTAL_DOMAINS_V];
@@ -90,7 +90,7 @@ GPR_INTERNAL void update_gpr_ipc_table(char *drv_path, uint16_t domain_id,
 GPR_INTERNAL uint32_t gpr_drv_init(void)
 {
    ALOGD("GPR INIT START");
-   uint32_t  rc;
+   uint32_t rc;
    uint32_t num_packet_pools =
              sizeof(gpr_lx_packet_pool_table)/sizeof(gpr_packet_pool_info_v2_t);
 
@@ -114,6 +114,50 @@ GPR_INTERNAL uint32_t gpr_drv_init(void)
                            FALSE);
 
    rc = gpr_drv_internal_init_v2(GPR_IDS_DOMAIN_ID_APPS_V,
+                                 num_domains,
+                                 gpr_lx_ipc_dl_table,
+                                 num_packet_pools,
+                                 gpr_lx_packet_pool_table);
+   ALOGD("GPR INIT EXIT");
+   return rc;
+}
+
+GPR_INTERNAL uint32_t gpr_drv_init_domain(uint32_t domain_id)
+{
+   ALOGD("GPR INIT START, for domain id %d", domain_id);
+   uint32_t rc;
+   uint32_t num_packet_pools =
+             sizeof(gpr_lx_packet_pool_table)/sizeof(gpr_packet_pool_info_v2_t);
+
+   memset(&gpr_lx_ipc_dl_table[0], 0, (sizeof(struct ipc_dl_v2_t) * GPR_PL_NUM_TOTAL_DOMAINS_V));
+
+   gpr_lx_ipc_dl_table[num_domains].domain_id = domain_id;
+   gpr_lx_ipc_dl_table[num_domains].init_fn = ipc_dl_local_init;
+   gpr_lx_ipc_dl_table[num_domains].deinit_fn = ipc_dl_local_deinit;
+   gpr_lx_ipc_dl_table[num_domains].supports_shared_mem = TRUE;
+
+   num_domains++;
+
+   if (domain_id == GPR_IDS_DOMAIN_ID_APPS_V)
+   {
+      update_gpr_ipc_table("/dev/aud_pasthru_adsp",
+                              GPR_IDS_DOMAIN_ID_ADSP_V,
+                              TRUE);
+      update_gpr_ipc_table("/dev/aud_pasthru_modem",
+                              GPR_IDS_DOMAIN_ID_MODEM_V,
+                              TRUE);
+      update_gpr_ipc_table("/dev/gpr_channel",
+                              GPR_IDS_DOMAIN_ID_CC_DSP_V,
+                              FALSE);
+   }
+   else if (domain_id == GPR_IDS_DOMAIN_ID_APPS2_V)
+   {
+      update_gpr_ipc_table("/dev/aud_pasthru_apps",
+                           GPR_IDS_DOMAIN_ID_ADSP_V,
+                           TRUE);
+   }
+
+   rc = gpr_drv_internal_init_v2(domain_id,
                                  num_domains,
                                  gpr_lx_ipc_dl_table,
                                  num_packet_pools,

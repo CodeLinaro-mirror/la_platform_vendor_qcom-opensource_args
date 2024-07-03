@@ -33,6 +33,7 @@
 #define GPR_DL_LX_ADSP_DRV "/dev/aud_pasthru_adsp"
 #define GPR_DL_LX_CC_DSP_DRV "/dev/gpr_channel"
 #define GPR_DL_LX_MODEM_DRV "/dev/aud_pasthru_modem"
+#define GPR_DL_LX_APPS_SPF_DRV "/dev/aud_pasthru_apps"
 #define GPR_DL_LX_BUF_SIZE 4096 /*bytes*/
 #define GPR_DL_LX_NO_OF_BUFFERS 8
 
@@ -282,7 +283,7 @@ void *receiver_thread_loop(void *priv_data)
 }
 
 
-static gpr_dl_lx_port_t * gpr_dl_lx_local_init(uint32_t dst_domain_id)
+static gpr_dl_lx_port_t * gpr_dl_lx_local_init(uint32_t src_domain_id, uint32_t dst_domain_id)
 {
     gpr_dl_lx_port_t *dl_lx_port;
     uint32_t status = 0;
@@ -290,12 +291,15 @@ static gpr_dl_lx_port_t * gpr_dl_lx_local_init(uint32_t dst_domain_id)
     pthread_attr_t tattr;
     struct sched_param param = { .sched_priority = 3 };
 
-    if (dst_domain_id < 0 || dst_domain_id >= GPR_PL_NUM_TOTAL_DOMAINS_V){
-        AR_LOG_ERR(LOG_TAG,"%s:%d invalid domain id:%d", __func__, __LINE__, dst_domain_id);
+    if ((dst_domain_id < 0) || (dst_domain_id >= GPR_PL_NUM_TOTAL_DOMAINS_V)
+        || (src_domain_id < 0) || (src_domain_id >= GPR_PL_NUM_TOTAL_DOMAINS_V)) {
+        AR_LOG_ERR(LOG_TAG,"%s:%d invalid domain(src domain id %d, dst domain id %d)",
+                __func__, __LINE__, src_domain_id, dst_domain_id);
         return NULL;
     }
-    AR_LOG_INFO(LOG_TAG,"%s:%d port setup for domain id:%d", __func__, __LINE__,
-               dst_domain_id);
+
+    AR_LOG_INFO(LOG_TAG,"%s:%d port setup for src domain id %d and dst domain id %d",
+            __func__, __LINE__, src_domain_id, dst_domain_id);
 
     if (gpr_dl_lx_ports[dst_domain_id] != NULL){
         AR_LOG_ERR(LOG_TAG,"%s:%d port already setup for domain id:%d", __func__, __LINE__,
@@ -311,13 +315,22 @@ static gpr_dl_lx_port_t * gpr_dl_lx_local_init(uint32_t dst_domain_id)
     dl_lx_port->thread_exit = false;
 
     if (dst_domain_id == GPR_IDS_DOMAIN_ID_ADSP_V) {
-        drv_name = GPR_DL_LX_ADSP_DRV;
-        dl_lx_port->drv_fd = open(drv_name, O_RDWR);
+        if (src_domain_id == GPR_IDS_DOMAIN_ID_APPS2_V) {
+            drv_name = GPR_DL_LX_APPS_SPF_DRV;
+            dl_lx_port->drv_fd = open(drv_name, O_RDWR);
+            AR_LOG_INFO(LOG_TAG,"%s:%d open drv_name:%s, drv_fd:%d", __func__, __LINE__, drv_name, dl_lx_port->drv_fd);
+        } else {
+            drv_name = GPR_DL_LX_ADSP_DRV;
+            dl_lx_port->drv_fd = open(drv_name, O_RDWR);
+        }
     } else if (dst_domain_id == GPR_IDS_DOMAIN_ID_MODEM_V) {
         drv_name = GPR_DL_LX_MODEM_DRV;
         dl_lx_port->drv_fd = open(drv_name, O_RDWR);
     } else if (dst_domain_id == GPR_IDS_DOMAIN_ID_CC_DSP_V) {
         drv_name = GPR_DL_LX_CC_DSP_DRV;
+        dl_lx_port->drv_fd = open(drv_name, O_RDWR);
+    } else if (dst_domain_id == GPR_IDS_DOMAIN_ID_APPS2_V) {
+        drv_name = GPR_DL_LX_APPS_SPF_DRV;
         dl_lx_port->drv_fd = open(drv_name, O_RDWR);
     } else {
         dl_lx_port->drv_fd = -1;
@@ -353,7 +366,7 @@ static gpr_dl_lx_port_t * gpr_dl_lx_local_init(uint32_t dst_domain_id)
 }
 
 
-static uint32_t gpr_dl_lx_local_deinit(uint32_t dst_domain_id)
+static uint32_t gpr_dl_lx_local_deinit(uint32_t src_domain_id, uint32_t dst_domain_id)
 {
     uint32_t status = AR_EOK;
     gpr_dl_lx_port_t *dl_lx_port;
@@ -386,19 +399,21 @@ static uint32_t gpr_dl_lx_local_deinit(uint32_t dst_domain_id)
     return status;
 }
 
-uint32_t ipc_dl_lx_init(uint32_t src_domain_id __attribute__((unused)),
+uint32_t ipc_dl_lx_init(uint32_t src_domain_id,
                         uint32_t dest_domain_id,
                         const gpr_to_ipc_vtbl_t *p_gpr_to_ipc_vtbl,
                         ipc_to_gpr_vtbl_t ** pp_ipc_to_gpr_vtbl)
 {
     gpr_dl_lx_port_t *dl_lx_port;
 
-    if (dest_domain_id < 0 || dest_domain_id >= GPR_PL_NUM_TOTAL_DOMAINS_V){
-        AR_LOG_ERR(LOG_TAG,"%s:%d invalid domain id:%d", __func__, __LINE__, dest_domain_id);
+    if ((dest_domain_id < 0) || (dest_domain_id >= GPR_PL_NUM_TOTAL_DOMAINS_V)
+        || (src_domain_id < 0) || (src_domain_id >= GPR_PL_NUM_TOTAL_DOMAINS_V)) {
+        AR_LOG_ERR(LOG_TAG,"%s:%d invalid domain(src domain id %d, dst domain id %d)",
+                __func__, __LINE__, src_domain_id, dest_domain_id);
         return AR_EBADPARAM;
     }
 
-    dl_lx_port = gpr_dl_lx_local_init(dest_domain_id);
+    dl_lx_port = gpr_dl_lx_local_init(src_domain_id, dest_domain_id);
     if (dl_lx_port == NULL) {
         AR_LOG_ERR(LOG_TAG,"%s:%d local_init failed", __func__, __LINE__);
         return AR_EFAILED;
@@ -416,12 +431,11 @@ uint32_t ipc_dl_lx_init(uint32_t src_domain_id __attribute__((unused)),
     return AR_EOK;
 }
 
-uint32_t ipc_dl_lx_deinit (uint32_t src_domain_id __attribute__((unused)),
-                           uint32_t dest_domain_id)
+uint32_t ipc_dl_lx_deinit(uint32_t src_domain_id, uint32_t dest_domain_id)
 {
    uint32_t status = AR_EOK;
 
-   status = gpr_dl_lx_local_deinit(dest_domain_id);
+   status = gpr_dl_lx_local_deinit(src_domain_id, dest_domain_id);
    return status;
 }
 
