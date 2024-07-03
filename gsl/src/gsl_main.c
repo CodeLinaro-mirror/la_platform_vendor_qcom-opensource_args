@@ -1293,7 +1293,9 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 	int32_t rc = AR_EOK;
 	struct gsl_graph *graph = NULL;
 	gsl_handle_t hdl = 0;
-	uint8_t i = 0;
+    uint32_t supported_ss_mask = 0;
+    bool_t is_shmem_supported = TRUE;
+    uint8_t i = 0;
 
 	if (graph_handle == NULL)
 		return AR_EBADPARAM;
@@ -1311,16 +1313,41 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 		goto cleanup;
 	}
 
-	GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
-	for (i = AR_SUB_SYS_ID_FIRST; i <= AR_SUB_SYS_ID_LAST; i++) {
-		if (gsl_ctxt.spf_restart[i]) {
-			//handle master proc restarting
-			gsl_shmem_remap_pre_alloc(i);
-			gsl_do_load_bootup_dyn_modules(i, NULL);
-			gsl_ctxt.spf_restart[i] = FALSE;
-		}
-	}
-	GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
+    for (i = AR_SUB_SYS_ID_FIRST; i <= AR_SUB_SYS_ID_LAST; i++) {
+        GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
+        if (gsl_ctxt.spf_restart[i]) {
+            GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
+
+            // handle master proc restarting
+            gsl_shmem_remap_pre_alloc(i);
+            gsl_mdf_utils_get_supported_ss_info_from_master_proc(i, &supported_ss_mask);
+			// open_close_lock will be acquired insides
+            rc = gsl_send_spf_satellite_info(i, supported_ss_mask);
+            if (rc) {
+                GSL_ERR("gsl_send_spf_satellite_info failed for master_proc %d rc %d", i, rc);
+                continue;
+            }
+
+            __gpr_cmd_is_shared_mem_supported(i, &is_shmem_supported);
+            if (is_shmem_supported) {
+                rc = gsl_mdf_utils_shmem_alloc(supported_ss_mask, i);
+                if (rc != AR_EOK && rc != AR_EUNSUPPORTED) {
+                    GSL_ERR("failed to alloc loaned shmem for master_proc %d rc %d", i, rc);
+                    continue;
+                }
+            }
+
+            rc = gsl_do_load_bootup_dyn_modules(i, NULL);
+            if (rc != AR_EOK && rc != AR_ENOTEXIST) {
+                GSL_ERR("dynamic module load failed for master_proc %d rc %d", i, rc);
+                continue;
+            }
+
+            GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
+            gsl_ctxt.spf_restart[i] = FALSE;
+        }
+        GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
+    }
 
 	/*
 	 * Initialize graph instance and register to GPR to

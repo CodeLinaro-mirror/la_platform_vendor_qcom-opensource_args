@@ -347,9 +347,13 @@ static inline void *gsl_mem_realloc(void *p, size_t old_sz, size_t new_sz)
 	};
 
 	new_p = ar_heap_malloc(new_sz, &heap_info);
-	gsl_memset(new_p, 0, new_sz);
-	gsl_memcpy(new_p, new_sz, p, old_sz);
-	ar_heap_free(p, &heap_info);
+	if (!new_p) {
+		GSL_ERR("ar_heap_malloc alloc mem failed!");
+	} else {
+		gsl_memset(new_p, 0, new_sz);
+		gsl_memcpy(new_p, new_sz, p, old_sz);
+		ar_heap_free(p, &heap_info);
+	}
 
 	return new_p;
 }

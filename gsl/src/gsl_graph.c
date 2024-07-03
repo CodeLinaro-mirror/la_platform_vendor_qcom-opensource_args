@@ -1649,7 +1649,7 @@ int32_t gsl_graph_set_tagged_custom_config(struct gsl_graph *graph,
 	ar_osal_mutex_t lock)
 {
 	int32_t rc = AR_EOK;
-	struct gsl_sgid_list sg_id_list = {.sg_ids = NULL, .len = 0};
+	struct gsl_sgid_list sg_id_list = {0, NULL};
 	struct gsl_module_id_info *module_info;
 	struct apm_cmd_header_t *cmd_header;
 	uint32_t i, module_info_size;
@@ -1889,7 +1889,7 @@ int32_t gsl_graph_get_tagged_custom_config(struct gsl_graph *graph,
 	ar_osal_mutex_t lock)
 {
 	int32_t rc = AR_EOK;
-	struct gsl_sgid_list sg_id_list = { .sg_ids = NULL, .len = 0 };
+	struct gsl_sgid_list sg_id_list = {0, NULL};
 	struct gsl_module_id_info *module_info = NULL;
 	apm_module_param_data_t *param_data = (apm_module_param_data_t *)payload;
 	uint32_t module_info_size = 0;
@@ -2312,7 +2312,7 @@ static int32_t gsl_graph_close_single_gkv(struct gsl_graph *graph,
 	uint8_t *pruned_sg_info = NULL;
 	uint32_t i, j, num_sg_conn = 0;
 	size_t pruned_sg_info_sz;
-	struct gsl_sgid_list pruned_sg_ids;
+	struct gsl_sgid_list pruned_sg_ids = {0, NULL};
 	struct gsl_sgobj_list sg_obj_list;
 	uint32_t total_num_sgs_to_close = 0;
 	struct gsl_glbl_persist_cal *tmp_gpcal;
@@ -2919,7 +2919,8 @@ static int32_t gsl_graph_open_single_gkv(struct gsl_graph *graph,
 	struct gsl_graph_gkv_node *gkv_node)
 {
 	int32_t rc;
-	struct gsl_sgid_list pruned_sgids = {0,}, sgids = {0,};
+	struct gsl_sgid_list pruned_sgids = {0, NULL};
+	struct gsl_sgid_list sgids = {0, NULL};
 	uint32_t i = 0;
 	AcdbGetGraphRsp sg_conn_info;
 	struct gsl_graph_sg_conn_data pruned_sg_conn = {0,};
@@ -3300,7 +3301,7 @@ int32_t gsl_graph_set_config(struct gsl_graph *graph,
 	const struct gsl_key_vector *tkv, ar_osal_mutex_t lock)
 {
 	int32_t rc = AR_EOK;
-	struct gsl_sgid_list sg_id_list = { .len = 0, .sg_ids = NULL};
+	struct gsl_sgid_list sg_id_list = {0, NULL};
 	ar_list_node_t *curr;
 	struct gsl_graph_gkv_node *gkv_node = NULL;
 	bool_t is_found = FALSE;
@@ -3441,7 +3442,7 @@ int32_t gsl_graph_set_cal(struct gsl_graph *graph,
 	ar_osal_mutex_t lock)
 {
 	int32_t rc = AR_EOK;
-	struct gsl_sgid_list sg_id_list = { 0, NULL };
+	struct gsl_sgid_list sg_id_list = {0, NULL};
 	ar_list_node_t *curr;
 	struct gsl_graph_gkv_node *gkv_node = NULL;
 	bool_t is_found = FALSE;
@@ -3508,7 +3509,7 @@ int32_t gsl_graph_prepare(struct gsl_graph *graph,
 	struct apm_cmd_header_t *cmd_header;
 	struct apm_module_param_data_t *module_param;
 	struct gsl_subgraph *sg, **sg_array = NULL;
-	struct gsl_sgobj_list sg_obj_list = { 0, NULL };
+	struct gsl_sgobj_list sg_obj_list = {0, NULL};
 	gsl_msg_t gsl_msg;
 
 	if (!graph)
@@ -3595,7 +3596,7 @@ static int32_t gsl_graph_cache_datapath_miid(struct gsl_graph *graph,
 	struct gsl_data_path_info *dp_info, uint32_t tag, uint32_t mode)
 {
 	int32_t rc = AR_EOK;
-	struct gsl_sgid_list sg_id_list;
+	struct gsl_sgid_list sg_id_list = {0, NULL};
 	struct gsl_module_id_info *module_info;
 	uint32_t module_info_size;
 
@@ -4004,7 +4005,7 @@ int32_t gsl_graph_flush(struct gsl_graph *graph, ar_osal_mutex_t lock)
 	struct apm_cmd_header_t *cmd_header;
 	struct apm_module_param_data_t *module_param;
 	struct gsl_subgraph *sg, **sg_array = NULL;
-	struct gsl_sgobj_list sg_obj_list = { 0, NULL };
+	struct gsl_sgobj_list sg_obj_list = {0, NULL};
 	gsl_msg_t gsl_msg;
 
 	if (!graph)
@@ -4473,7 +4474,9 @@ int32_t gsl_graph_change(struct gsl_graph *graph,
 	struct gsl_graph_gkv_node *gkv_node = NULL, *temp_node = NULL;
 	struct gsl_key_vector *gkv = &cg->graph_key_vector;
 	struct gsl_key_vector *ckv = &cg->cal_key_vect;
-	struct gsl_sgid_list sgids, pruned_sgids, existing_sgids;
+	struct gsl_sgid_list sgids = {0, NULL};
+	struct gsl_sgid_list pruned_sgids = {0, NULL};
+	struct gsl_sgid_list existing_sgids = {0, NULL};
 	AcdbGetGraphRsp sg_conn_info;
 	AcdbSubgraph *p;
 	struct gsl_graph_sg_conn_data pruned_sg_conn = { 0, },
