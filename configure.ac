@@ -1,22 +1,35 @@
 #                                               -*- Autoconf -*-
-# configure.ac -- Autoconf script for gpr
+# configure.ac -- Autoconf script for spf
 #
 
 # Process this file with autoconf to produce a configure script
 
 # Requires autoconf tool later than 2.61
 AC_PREREQ(2.69)
-# Initialize the gpr package version 1.0.0
-AC_INIT([gpr],1.0.0)
+
+AC_INIT([arosp],1.0.1)
 # Does not strictly follow GNU Coding standards
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
-
+LT_INIT
 AC_PROG_CC
-AM_PROG_AR
+AC_PROG_CXX
 AC_PROG_LIBTOOL
+AM_PROG_AR
+
+AC_ARG_WITH([qcom],
+    AS_HELP_STRING([install qcom header files (default is no)]),
+        [with_qcom=$withval],
+	    [with_qcom=no])
+	    AM_CONDITIONAL([ARGS_VENDOR_QCOM], [test "x${with_qcom}" = "xyes"])
+
+AC_ARG_WITH([syslog],
+    AS_HELP_STRING([use syslog (default is no)]),
+        [with_syslog=$withval],
+	    [with_syslog=no])
+	    AM_CONDITIONAL([ARGS_USE_SYSLOG], [test "x${with_syslog}" = "xyes"])
 
 AC_ARG_WITH([glib],
-      AS_HELP_STRING([--with-glib],
+      AC_HELP_STRING([--with-glib],
          [enable glib, Build against glib. Use this when building for HLOS systems which use glib]))
 
 if (test "x${with_glib}" = "xyes"); then
@@ -39,11 +52,35 @@ AC_ARG_WITH([cutils],
      [with_cutils=yes])
 AM_CONDITIONAL([CUTILS_SUPPORTED], [test "x${with_cutils}" = "xyes"])
 
-AC_ARG_WITH([openwrt],
-    AS_HELP_STRING([use openwrt (default is no)]),
-    [with_openwrt=$withval],
-    [with_openwrt=no])
-AM_CONDITIONAL([BUILDSYSTEM_OPENWRT], [test "x${with_openwrt}" = "xyes"])
+AC_ARG_WITH([dummy_diag],
+      AC_HELP_STRING([--with-dummy_diag],
+         [use dummy diag instead of libdiag]))
 
-AC_CONFIG_FILES([ Makefile gpr.pc ])
+if (test "x${with_dummy_diag}" = "xno"); then
+        PKG_CHECK_MODULES([DIAG], [diag])
+        AC_SUBST([DIAG_CFLAGS])
+        AC_SUBST([DIAG_LIBS])
+fi
+
+AM_CONDITIONAL(USE_DUMMY_DIAG, test "x${with_dummy_diag}" = "xyes")
+
+AC_CONFIG_FILES(
+Makefile
+spf/Makefile
+ar_osal/Makefile
+ar_util/Makefile
+acdb/Makefile
+acdb/ats/Makefile
+gpr/Makefile
+gsl/Makefile
+spf/spf.pc
+ar_osal/ar_osal.pc
+ar_util/ar_util.pc
+acdb/acdb.pc
+acdb/ats/ats.pc
+gpr/gpr.pc
+gsl/gsl.pc
+)
+
+
 AC_OUTPUT
