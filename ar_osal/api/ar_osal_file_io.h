@@ -97,6 +97,42 @@ int32_t ar_fopen(ar_fhandle *handle,
 size_t ar_fsize(ar_fhandle handle);
 
 /**
+ * \brief ar_fmap
+ *          Map a file into Data Memory for Read Only access
+ *
+ * Whether this allocates heap memory for the buffer or not
+ * is platform dependent. On some platforms with low memory
+ * this may map non-volatile storage into a readable memory window instead.
+ * To free any possible resources allocated by this call, the caller
+ * MUST call ar_funmap
+ *
+ * \param[in] handle: Handle to the file
+ * \param[out] fbuffer: A pointer to the read-only Data memory buffer
+ * 
+ * \return
+ *  0 -- Success
+ *  Nonzero -- Failure
+ */
+int32_t ar_fmap(ar_fhandle handle, 
+                const void **fbuffer);
+
+/**
+ * \brief ar_funmap
+ *          Un-map a file from Data Memory
+ *
+ * This call releases a buffer obtained by a previous call to ar_fmap
+ * and frees any resources that may be in use by it.
+ * The file still needs to be closed by a call to ar_fclose
+ *
+ * \param[in] fbuffer: The pointer to the file buffer obtained by ar_fmap
+ * 
+ * \return
+ *  0 -- Success
+ *  Nonzero -- Failure
+ */
+int32_t ar_funmap(const void *fbuffer);
+
+/**
  * \brief  ar_fseek
  *           Move the file pointer for read/write to the required offset.
  *   
