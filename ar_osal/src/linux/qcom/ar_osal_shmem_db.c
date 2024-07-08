@@ -27,7 +27,6 @@
 #include "ar_osal_shmem.h"
 #include "ar_osal_error.h"
 #include "ar_osal_log.h"
-#include "ar_osal_sleep.h"
 
 #define  SHMEM_4K_ALIGNMENT       0x1000
 #define AR_MEM_DRIVER_PATH "/dev/msm_audio_ion"
@@ -35,8 +34,6 @@
 #define DMABUF_SYS_HEAP_PATH "/dev/dma_heap/system"
 #define DMABUF_SYS_HEAP_PATH_UNCACHED "/dev/dma_heap/qcom,system-uncached"
 #define DMABUF_SYS_HEAP_PATH_CMA "/dev/dma_heap/qcom,audio-ml"
-#define AR_FD_OPEN_RETRY_US (500*1000)
-#define AR_FD_OPEN_NUM_RETRIES 4
 
 
 typedef struct ar_shmem_handle_data {
@@ -132,17 +129,10 @@ int32_t ar_shmem_init(void)
       goto end;
     }
 
-    for (int j = 0; j < AR_FD_OPEN_NUM_RETRIES; ++j) {
-      pdata->armem_fd = open(AR_MEM_DRIVER_PATH, O_RDWR);
-      if (pdata->armem_fd < 0) {
-        AR_LOG_ERR(AR_OSAL_SHMEM_LOG_TAG, "armem fd open(%s) failed with errno:%d, retries %d\n", AR_MEM_DRIVER_PATH, errno, j);
-        ar_osal_micro_sleep(AR_FD_OPEN_RETRY_US);
-      } else {
-        break;
-      }
-    }
+    pdata->armem_fd = open(AR_MEM_DRIVER_PATH, O_RDWR);
     if (pdata->armem_fd < 0) {
       status = AR_ENOTEXIST;
+      AR_LOG_ERR(AR_OSAL_SHMEM_LOG_TAG,"%s armem fd open failed %s status %d\n", __func__, AR_MEM_DRIVER_PATH, status);
       close(pdata->dmabuf_fd);
       goto end;
     }
