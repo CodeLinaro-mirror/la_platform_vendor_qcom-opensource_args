@@ -4123,7 +4123,7 @@ int32_t AcdbCmdGetGraph(AcdbGraphKeyVector *gkv, AcdbGetGraphRsp *rsp,
     AcdbGraphKeyVector graph_kv = { 0 };
     acdb_graph_info_t graph_info = { 0 };
 
-    if (IsNull(gkv) || IsNull(rsp))
+    if (IsNull(gkv) || IsNull(rsp) || IsNull(gkv->graph_key_vector))
     {
         ACDB_ERR("Error[%d]: One or more input parameters are null:"
             " GKV or Response", status);
