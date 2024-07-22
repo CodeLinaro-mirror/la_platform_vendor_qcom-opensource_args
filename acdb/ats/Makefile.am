@@ -22,11 +22,15 @@ AM_CFLAGS += -I ${srcdir}/inc \
              -I ${srcdir}/online/common/inc \
              -I ${srcdir}/rtc/common/inc \
              -I ${srcdir}/fts/common/inc \
-             -I ${srcdir}/transports/tcpip/linux/inc \
              -I ${srcdir}/mcs/common/inc \
              -I ${srcdir}/mcs/common/api \
              -I ${srcdir}/adie/common/inc \
-             -I ${srcdir}/adie/common/api
+             -I ${srcdir}/adie/common/api \
+             -I ${srcdir}/sockets/common/api/ \
+             -I ${srcdir}/transports/common/api/ \
+             -I ${srcdir}/transports/common/inc/ \
+             -I ${srcdir}/transports/tcpip_server/inc/ \
+             -I ${srcdir}/transports/tcpip_server/api/
 
 AM_CPPFLAGS = $(AM_CFLAGS)
 
@@ -43,7 +47,12 @@ ats_c_sources = ./src/ats.c \
                 ./mcs/linux/mcs.c \
                 ./online/common/src/ats_online.c \
                 ./rtc/common/src/ats_rtc.c \
-                ./transports/tcpip/linux/src/ats_server.cpp
+                ./sockets/linux/src/ar_sockets.cpp \
+                ./transports/common/src/ats_transport.c \
+                ./transports/tcpip_server/src/tcpip_cmd_server.cpp \
+                ./transports/tcpip_server/src/tcpip_rtm_server.cpp \
+                ./transports/tcpip_server/src/tcpip_socket_util.cpp
+
 
 #Includes
 lib_includedir = $(includedir)
@@ -72,4 +81,28 @@ endif
 libats_la_SOURCES = $(ats_c_sources)
 libats_la_CFLAGS = $(AM_CFLAGS)
 libats_la_CPPFLAGS = $(AM_CPPFLAGS)
+if USES_ATS_TRANSPORT_TCPIP
+libats_la_CFLAGS += -DATS_TRANSPORT_TCPIP
+libats_la_CPPFLAGS += -DATS_TRANSPORT_TCPIP
+endif
 libats_la_LDFLAGS = -shared -avoid-version
+
+AM_CPPFLAGS += -DSOCK_PATH='"/usr/bin/gateway/ats_sockets"' \
+        -DSOCK_PATH_SERVER='"/usr/bin/gateway/ats_sockets/unix_sock.server"' \
+        -DSOCK_PATH_GATEWAY='"/usr/bin/gateway/ats_sockets/unix_sock.gateway"'
+
+AM_CPPFLAGS += -I$(srcdir)/transports/tcpip_gateway/inc
+AM_CPPFLAGS += -I$(top_srcdir)/ar_osal/api
+AM_CPPFLAGS += -I$(top_srcdir)/acdb/ats/sockets/common/api/
+
+AM_CPPFLAGS += @GLIB_CFLAGS@ -Dstrlcpy=g_strlcpy -include glib.h
+
+gateway_sources = ./transports/tcpip_gateway/src/tcpip_gateway_main.cpp \
+                  ./transports/tcpip_gateway/src/tcpip_gateway_cmd_server.cpp \
+                  ./sockets/linux/src/ar_sockets.cpp
+
+bin_PROGRAMS = ats_gateway
+ats_gateway_CC = @CC@
+ats_gateway_SOURCES = $(gateway_sources)
+ats_gateway_LDADD = $(top_builddir)/ar_osal/libar_osal.la
+ats_gateway_CPPFLAGS = $(AM_CPPFLAGS)
