@@ -7,7 +7,7 @@
  *      Common header file used by GSL modules.
  *
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -267,6 +267,8 @@ struct gsl_signal {
 	int32_t status;
 	/** gpr packet pointer */
 	void *gpr_packet;
+	/** gpr expected packet token */
+	uint32_t expected_packet_token;
 };
 
 enum gsl_graph_sig_event_mask {
