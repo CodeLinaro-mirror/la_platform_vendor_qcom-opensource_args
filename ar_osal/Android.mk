@@ -16,6 +16,13 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/api
 
 LOCAL_CFLAGS := $(osal-def)
 
+# add for gcov dump
+ifeq ($(AUDIO_FEATURE_ENABLED_GCOV), true)
+LOCAL_CFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_CPPFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_LDFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+endif
+
 LOCAL_HEADER_LIBRARIES += audio_kernel_headers
 LOCAL_HEADER_LIBRARIES += libarosal_headers
 LOCAL_HEADER_LIBRARIES += qti_audio_kernel_uapi

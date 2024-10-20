@@ -44,6 +44,13 @@ LOCAL_CFLAGS := -D_ANDROID_ \
         -DSESSION_ARRAY_SIZE=200 \
         -DGPR_USE_CUTILS
 
+# add for gcov dump
+ifeq ($(AUDIO_FEATURE_ENABLED_GCOV), true)
+LOCAL_CFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_CPPFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_LDFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+endif
+
 ifeq ($(TARGET_SUPPORTS_WEAR_AON),true)
 LOCAL_CFLAGS += -DPLATFORM_SLATE
 endif
