@@ -2550,6 +2550,10 @@ static int32_t gsl_graph_close_single_gkv(struct gsl_graph *graph,
 		gkv_node->num_of_gp_cals = 0;
 	}
 
+	rc = gsl_mdf_utils_deregister_dynamic_pd(graph->ss_mask, graph->proc_id);
+	if (rc)
+		GSL_ERR("dynamic pd de-init failed, status %d", rc);
+
 free_pruned_sg_info:
 
 	if (props) {
@@ -2796,6 +2800,7 @@ static int32_t gsl_graph_open_sgids_and_connections(struct gsl_graph *graph,
 	struct gsl_sgobj_list sg_obj_list;
 	gsl_msg_t gsl_msg;
 	bool_t is_shmem_supported = TRUE;
+	bool_t dyn_pd_failed = FALSE;
 
 	/* check if there are any sub-graphs or edges to open */
 	if ((sgids->len == 0) && (sg_conn->num_sgs == 0))
@@ -2855,6 +2860,13 @@ static int32_t gsl_graph_open_sgids_and_connections(struct gsl_graph *graph,
 			!= gkv_node->spf_ss_mask) {
 
 			rc = AR_ENOTREADY;
+			goto free_sg_prop_data;
+		}
+
+		rc = gsl_mdf_utils_register_dynamic_pd(graph->ss_mask, graph->proc_id);
+		if (rc) {
+			GSL_ERR("dynamic pd create failed, status %d", rc);
+		        dyn_pd_failed = TRUE;
 			goto free_sg_prop_data;
 		}
 
@@ -2984,6 +2996,8 @@ free_gsl_msg:
 
 free_sg_prop_data:
 	gsl_mem_free(drv_blob.sub_graph_prop_data);
+	if (dyn_pd_failed)
+		gsl_mdf_utils_deregister_dynamic_pd(graph->ss_mask, graph->proc_id);
 
 exit:
 	return rc;
