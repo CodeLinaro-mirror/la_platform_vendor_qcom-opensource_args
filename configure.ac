@@ -9,7 +9,7 @@ AC_PREREQ(2.69)
 
 AC_INIT([arosp],1.0.1)
 # Does not strictly follow GNU Coding standards
-AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 LT_INIT
 AC_PROG_CC
 AC_PROG_CXX

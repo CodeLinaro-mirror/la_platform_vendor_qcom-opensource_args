@@ -2954,6 +2954,12 @@ static int32_t gsl_graph_open_sgids_and_connections(struct gsl_graph *graph,
 		GSL_MUTEX_LOCK(graph->get_set_cfg_lock);
 		rc = gsl_graph_set_sg_cal(graph, sgids, gkv_node, ckv);
 		GSL_MUTEX_UNLOCK(graph->get_set_cfg_lock);
+#ifdef FEATURE_IPQ_OPENWRT
+		if (rc) {
+			GSL_DBG("Graph set cal failed : %d", rc);
+			rc = AR_EOK;
+		}
+#else
 		if (rc == AR_EUNSUPPORTED || rc == AR_ENOTEXIST) {
 			/*
 			 * we let open succeed since ENOTEXIST is benign and EUNSUPPORTED is
@@ -2977,6 +2983,7 @@ static int32_t gsl_graph_open_sgids_and_connections(struct gsl_graph *graph,
 			gsl_graph_close_sgids_and_connections(graph, *sgids,
 				sg_conn->subgraphs, sg_conn->num_sgs);
 		}
+#endif
 	}
 
 free_gsl_msg:
