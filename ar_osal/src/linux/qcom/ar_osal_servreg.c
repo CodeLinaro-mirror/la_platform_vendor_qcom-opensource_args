@@ -333,7 +333,7 @@ end:
 *  null on failure.
 */
 _IRQL_requires_max_(PASSIVE_LEVEL)
-ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type __unused,
+ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type,
     _In_opt_ ar_osal_servreg_callback cb_func,
     _In_opt_ void *cb_context,
     _In_ ar_osal_servreg_entry_type *domain,
@@ -469,8 +469,8 @@ end:
 *  Nonzero -- Failure
 */
 _IRQL_requires_max_(PASSIVE_LEVEL)
-int32_t ar_osal_servreg_set_state(_In_ ar_osal_servreg_t servreg_handle __unused,
-    _In_ ar_osal_service_state_type state __unused)
+int32_t ar_osal_servreg_set_state(_In_ ar_osal_servreg_t servreg_handle,
+    _In_ ar_osal_service_state_type state)
 {
     return AR_ENOTIMPL;
 }

@@ -3,8 +3,7 @@ pkgconfig_DATA = ar_osal.pc
 EXTRA_DIST = $(pkgconfig_DATA)
 
 AM_CFLAGS = -Wall -Wno-pointer-to-int-cast -Wno-error=unused-function \
-            -Wno-error=unused-label
-AM_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\) -DLINUX_ENABLED
+            -Wno-error=unused-label -DLINUX_ENABLED
 
 AM_CFLAGS += -I$(srcdir)/api \
              -I$(top_srcdir)/acdb/ats/transports/diag/linux/inc/

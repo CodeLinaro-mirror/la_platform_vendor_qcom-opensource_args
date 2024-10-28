@@ -25,13 +25,13 @@ typedef struct osal_int_mutex {
 } osal_int_mutex_t;
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
-int32_t ar_osal_mutex_init(_Inout_ ar_osal_mutex_t mutex __unused)
+int32_t ar_osal_mutex_init(_Inout_ ar_osal_mutex_t mutex)
 {
     return AR_ENOTIMPL;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
-int32_t ar_osal_mutex_deinit(_In_ ar_osal_mutex_t mutex __unused)
+int32_t ar_osal_mutex_deinit(_In_ ar_osal_mutex_t mutex)
 {
     return AR_ENOTIMPL;
 }

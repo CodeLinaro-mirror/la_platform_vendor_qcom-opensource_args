@@ -27,13 +27,13 @@ typedef struct osal_int_signal {
 } osal_int_signal_t;
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-int32_t ar_osal_signal_init(_In_ ar_osal_signal_t signal __unused)
+int32_t ar_osal_signal_init(_In_ ar_osal_signal_t signal)
 {
     return AR_ENOTIMPL;
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-int32_t ar_osal_signal_deinit(_In_ ar_osal_signal_t signal __unused)
+int32_t ar_osal_signal_deinit(_In_ ar_osal_signal_t signal)
 {
     return AR_ENOTIMPL;
 }
