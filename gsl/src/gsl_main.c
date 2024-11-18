@@ -5,7 +5,7 @@
  *      Main entry point for Graph Service Layer (GSL)
  *
  * \copyright
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include "gsl_intf.h"
@@ -72,6 +72,7 @@ ar_osal_mutex_t log_mutex;
 
 #define GSL_DYN_DL_RETRY_MS (500)
 #define GSL_DYN_DL_NUM_RETRIES 4
+#define GSL_DYN_DL_NUM_RETRIES_SSR 6
 
 #define GSL_SS_RETRY_MS (10)
 
@@ -1297,6 +1298,7 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 	uint32_t supported_ss_mask = 0;
 	bool_t is_shmem_supported = TRUE;
 	uint8_t i = 0;
+	uint8_t j = 0;
 	int32_t ss_retry_count = 10;
 
 	if (graph_handle == NULL)
@@ -1339,14 +1341,18 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 				}
 			}
 
-			rc = gsl_do_load_bootup_dyn_modules(i, NULL);
-			if (rc != AR_EOK && rc != AR_ENOTEXIST) {
-				GSL_ERR("dynamic module load failed for master_proc %d rc %d", i, rc);
-				continue;
-			}
-
+            /* retry for up to 3 seconds to help in cases
+			    where ADSP RPC thread not ready */
 			GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
-			gsl_ctxt.spf_restart[i] = FALSE;
+			for (j = 0; j < GSL_DYN_DL_NUM_RETRIES_SSR; ++j) {
+				rc = gsl_do_load_bootup_dyn_modules(i, NULL);
+				if (rc) {
+					ar_osal_micro_sleep(GSL_TIMEOUT_US(GSL_DYN_DL_RETRY_MS));
+				} else {
+					gsl_ctxt.spf_restart[i] = FALSE;
+					break;
+				}
+			}
 		}
 		GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
 	}

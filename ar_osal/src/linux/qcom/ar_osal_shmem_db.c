@@ -6,7 +6,7 @@
  *      This file has implementation for DMA buffer based shared memory allocation for DSP.
 
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #define  AR_OSAL_SHMEM_LOG_TAG     "COSH"
@@ -30,7 +30,7 @@
 #ifdef AR_OSAL_USE_DYNAMIC_PD
 #include "remote.h"
 #endif
-
+#include "ar_osal_sleep.h"
 #define  SHMEM_4K_ALIGNMENT       0x1000
 #define AR_MEM_DRIVER_PATH "/dev/msm_audio_ion"
 #define AR_MEM_DRIVER_PATH_CMA "/dev/msm_audio_ion_cma"
@@ -41,6 +41,8 @@
 #endif
 #define DMABUF_SYS_HEAP_PATH_UNCACHED "/dev/dma_heap/qcom,system-uncached"
 #define DMABUF_SYS_HEAP_PATH_CMA "/dev/dma_heap/qcom,audio-ml"
+#define AR_FD_OPEN_RETRY_US (500*1000)
+#define AR_FD_OPEN_NUM_RETRIES 4
 
 #ifdef AR_OSAL_USE_DYNAMIC_PD
 static int32_t ar_dsp_domain_id[AR_SUB_SYS_ID_LAST + 1] = {
@@ -306,10 +308,17 @@ int32_t ar_shmem_init(void)
       goto end;
     }
 
-    pdata->armem_fd = open(AR_MEM_DRIVER_PATH, O_RDWR);
+    for (int j = 0; j < AR_FD_OPEN_NUM_RETRIES; ++j) {
+      pdata->armem_fd = open(AR_MEM_DRIVER_PATH, O_RDWR);
+      if (pdata->armem_fd < 0) {
+        AR_LOG_ERR(AR_OSAL_SHMEM_LOG_TAG, "armem fd open(%s) failed with errno:%d, retries %d\n", AR_MEM_DRIVER_PATH, errno, j);
+        ar_osal_micro_sleep(AR_FD_OPEN_RETRY_US);
+      } else {
+        break;
+      }
+    }
     if (pdata->armem_fd < 0) {
       status = AR_ENOTEXIST;
-      AR_LOG_ERR(AR_OSAL_SHMEM_LOG_TAG,"%s armem fd open failed %s status %d\n", __func__, AR_MEM_DRIVER_PATH, status);
       close(pdata->dmabuf_fd);
       goto end;
     }
