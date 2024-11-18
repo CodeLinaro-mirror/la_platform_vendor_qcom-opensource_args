@@ -7,7 +7,7 @@
  *      Common header file used by GSL modules.
  *
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -66,7 +66,7 @@
 #define GSL_SPF_READ_WRITE_TIMEOUT_MS  (60000LL) /* 1 min */
 #else
 #define GSL_SPF_TIMEOUT_MS  (1000)
-#define GSL_GRAPH_OPEN_TIMEOUT_MS  (1000)
+#define GSL_GRAPH_OPEN_TIMEOUT_MS  (4000)
 #define GSL_SPF_READ_WRITE_TIMEOUT_MS  (1000)
 #endif
 
