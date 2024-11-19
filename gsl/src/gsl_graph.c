@@ -735,9 +735,95 @@ static int32_t gsl_acdb_get_subgraph_data(struct gsl_sgid_list *sg_id_list,
 	return rc;
 }
 
+static void gsl_graph_ckv_list_print(AcdbKeyVectorList *rsp)
+{
+	uint32_t i = 0, j = 0;
+	uint8_t* pKv = NULL;
+	AcdbKeyVector *kvs = NULL;
+
+	pKv = (uint8_t*)rsp->key_vector_list;
+	for (i = 0; i < rsp->num_key_vectors; i++) {
+		kvs = (AcdbKeyVector *)pKv;
+		if (!kvs) {
+			GSL_ERR("kvs is null");
+			return;
+		}
+		GSL_VERBOSE("num_keys %d", kvs->num_keys);
+		for (j = 0; j < kvs->num_keys; j++) {
+			AcdbKeyValuePair kv = kvs->graph_key_vector[j];
+			GSL_VERBOSE("key:0x%x, value:%x", kv.key, kv.value);
+		}
+		pKv += sizeof(uint32_t) + kvs->num_keys * sizeof(AcdbKeyValuePair);
+	}
+}
+
+static void gsl_graph_check_ckvs(struct gsl_key_vector *gkv, struct gsl_key_vector *ckv)
+{
+	AcdbKeyVectorList rsp;
+	uint32_t rsp_size = sizeof(AcdbKeyVectorList);
+	AcdbKeyVector *kvs = NULL;
+	uint8_t* pKv = NULL;
+	uint32_t i = 0, j = 0;
+	uint32_t key = 0;
+	int ckv_count = 0;
+	int rc = AR_EOK;
+
+	rsp.list_size = 0;
+	rc = gsl_get_graph_ckvs(gkv, (void *)&rsp, &rsp_size);
+	if (rc) {
+		GSL_ERR("gsl_get_graph_ckvs failed: %d", rc);
+		return;
+	}
+
+	GSL_DBG("num_key_vectors %d, list_size %d", rsp.num_key_vectors, rsp.list_size);
+	rsp.key_vector_list = (AcdbKeyVector *)malloc(rsp.list_size);
+	if (!rsp.key_vector_list) {
+		GSL_ERR("malloc return failed");
+		return;
+	}
+
+	rc = gsl_get_graph_ckvs(gkv, (void *)&rsp, &rsp_size);
+	if (rc) {
+		GSL_ERR("gsl_get_graph_ckvs failed: %d", rc);
+		goto exit;
+	}
+
+	gsl_graph_ckv_list_print(&rsp);
+
+	// get CKV count
+	pKv = (uint8_t*)rsp.key_vector_list;
+	for (i = 0; i < rsp.num_key_vectors; i++) {
+		kvs = (AcdbKeyVector *)pKv;
+		if (!kvs) {
+			GSL_ERR("kvs is null");
+			return;
+		}
+		GSL_VERBOSE("num_keys %d", kvs->num_keys);
+		for (j = 0; j < kvs->num_keys; j++) {
+			AcdbKeyValuePair kv = kvs->graph_key_vector[j];
+			GSL_VERBOSE("key:0x%x, value:%x", kv.key, kv.value);
+			if (key != kv.key) {
+				key = kv.key;
+				ckv_count++;
+			}
+		}
+		pKv += sizeof(uint32_t) + kvs->num_keys * sizeof(AcdbKeyValuePair);
+	}
+
+	if (ckv_count != ckv->num_kvps)
+			GSL_ERR("CKVs mismatched. ACDB CKVs count %d CKVs sent from HAL count %d", ckv_count, ckv->num_kvps);
+
+	exit:
+	if (rsp.key_vector_list) {
+		free(rsp.key_vector_list);
+	}
+}
+
 static int32_t gsl_graph_send_nonpersist_cal(struct gsl_graph *graph,
 	struct gsl_sgid_list *sgid_list,
-	struct gsl_key_vector *prior_ckv, const struct gsl_key_vector *new_ckv)
+	struct gsl_key_vector *prior_ckv, const struct gsl_key_vector *new_ckv,
+	const struct gsl_key_vector *gkv,
+	bool isCKVValidated)
 {
 	AcdbSgIdCalKeyVector cmd_struct;
 	AcdbBlob rsp_struct;
@@ -756,6 +842,9 @@ static int32_t gsl_graph_send_nonpersist_cal(struct gsl_graph *graph,
 
 	rsp_struct.buf = NULL;
 	rsp_struct.buf_size = 0;
+
+	if (!isCKVValidated)
+		gsl_graph_check_ckvs(gkv, new_ckv);
 
 	rc = acdb_ioctl(ACDB_CMD_GET_SUBGRAPH_CALIBRATION_DATA_NONPERSIST,
 		&cmd_struct, sizeof(cmd_struct), &rsp_struct, sizeof(rsp_struct));
@@ -2031,7 +2120,8 @@ exit:
 
 static int32_t gsl_graph_set_sg_cal(struct gsl_graph *graph,
 	struct gsl_sgid_list *sgid_list, struct gsl_graph_gkv_node *gkv_node,
-	const struct gsl_key_vector *ckv)
+	const struct gsl_key_vector *ckv, const struct gsl_key_vector *gkv,
+	bool isCKVValidated)
 {
 	int32_t rc = AR_EOK;
 	struct gsl_key_vector *prior_ckv = &gkv_node->ckv;
@@ -2060,7 +2150,7 @@ static int32_t gsl_graph_set_sg_cal(struct gsl_graph *graph,
 	sg_objs_list.len = gkv_node->num_of_subgraphs;
 	sg_objs_list.sg_objs = gkv_node->sg_array;
 
-	rc = gsl_graph_send_nonpersist_cal(graph, sgid_list, prior_ckv, new_ckv);
+	rc = gsl_graph_send_nonpersist_cal(graph, sgid_list, prior_ckv, new_ckv, gkv, isCKVValidated);
 	if (rc == AR_ENOTEXIST || rc == AR_EUNSUPPORTED) {
 		GSL_DBG("graph send non-persist cal warning %d", rc);
 		rc = AR_EOK;
@@ -2964,7 +3054,7 @@ static int32_t gsl_graph_open_sgids_and_connections(struct gsl_graph *graph,
 	/* Apply cal */
 	if (sgids->len) {
 		GSL_MUTEX_LOCK(graph->get_set_cfg_lock);
-		rc = gsl_graph_set_sg_cal(graph, sgids, gkv_node, ckv);
+		rc = gsl_graph_set_sg_cal(graph, sgids, gkv_node, ckv, gkv, false);
 		GSL_MUTEX_UNLOCK(graph->get_set_cfg_lock);
 		if (rc == AR_EUNSUPPORTED || rc == AR_ENOTEXIST) {
 			/*
@@ -3576,7 +3666,7 @@ int32_t gsl_graph_set_cal(struct gsl_graph *graph,
 	for (i = 0; i < gkv_node->num_of_subgraphs; ++i)
 		sg_id_list.sg_ids[i] = gkv_node->sg_array[i]->sg_id;
 
-	rc = gsl_graph_set_sg_cal(graph, &sg_id_list, gkv_node, ckv);
+	rc = gsl_graph_set_sg_cal(graph, &sg_id_list, gkv_node, ckv, gkv, true);
 	if (rc && rc != AR_ENOTEXIST)
 		GSL_ERR("set cal failed: %d", rc);
 	if (rc == AR_ENOTEXIST)
