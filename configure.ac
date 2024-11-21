@@ -88,6 +88,9 @@ fi
 
 AM_CONDITIONAL([LIBION_SUPPORTED], [test "x${with_libion}" = "xyes"])
 
+AC_CHECK_FUNCS([strlcpy])
+AM_CONDITIONAL(USE_G_STR_FUNC, ! test "x$ac_cv_func_strlcpy" = "xyes")
+
 AC_CONFIG_FILES(
 Makefile
 spf/Makefile
