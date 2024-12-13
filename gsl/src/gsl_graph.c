@@ -760,7 +760,6 @@ static void gsl_graph_ckv_list_print(AcdbKeyVectorList *rsp)
 static void gsl_graph_check_ckvs(struct gsl_key_vector *gkv, struct gsl_key_vector *ckv)
 {
 	AcdbKeyVectorList rsp;
-	uint32_t rsp_size = sizeof(AcdbKeyVectorList);
 	AcdbKeyVector *kvs = NULL;
 	uint8_t* pKv = NULL;
 	uint32_t i = 0, j = 0;
@@ -769,7 +768,7 @@ static void gsl_graph_check_ckvs(struct gsl_key_vector *gkv, struct gsl_key_vect
 	int rc = AR_EOK;
 
 	rsp.list_size = 0;
-	rc = gsl_get_graph_ckvs(gkv, (void *)&rsp, &rsp_size);
+	rc = gsl_get_graph_ckvs(gkv, (void *)&rsp);
 	if (rc) {
 		GSL_ERR("gsl_get_graph_ckvs failed: %d", rc);
 		return;
@@ -782,7 +781,7 @@ static void gsl_graph_check_ckvs(struct gsl_key_vector *gkv, struct gsl_key_vect
 		return;
 	}
 
-	rc = gsl_get_graph_ckvs(gkv, (void *)&rsp, &rsp_size);
+	rc = gsl_get_graph_ckvs(gkv, (void *)&rsp);
 	if (rc) {
 		GSL_ERR("gsl_get_graph_ckvs failed: %d", rc);
 		goto exit;
