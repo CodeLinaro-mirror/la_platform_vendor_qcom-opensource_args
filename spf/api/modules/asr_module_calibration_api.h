@@ -1,5 +1,5 @@
 /*==================================================
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  ==================================================*/
 
@@ -248,7 +248,7 @@ typedef enum
     BUFFERED,            /* Buffer up ASR engine output based on configured buffer size from client.
                          Send the event to clients once buffer is full.
                          Typical usage : save transcription output in background. */
-};
+} ASR_OUTPUT_TYPE;
 
 struct param_id_asr_output_config_t
 {
