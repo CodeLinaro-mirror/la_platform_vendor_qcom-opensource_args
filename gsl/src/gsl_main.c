@@ -12,6 +12,7 @@
 #include "acdb.h"
 #include "ar_osal_error.h"
 #include "ar_osal_log.h"
+#include "ar_osal_shmem.h"
 #include "ar_util_list.h"
 #include "ar_util_data_log.h"
 #include "ar_util_err_detection.h"
@@ -886,13 +887,22 @@ int32_t gsl_get_graph_tkvs(const struct gsl_key_vector *graph_key_vect,
 int32_t gsl_get_graph_ckvs(const struct gsl_key_vector *graph_key_vect,
 	struct gsl_key_vector_list *data_payload)
 {
-	int32_t rc = AR_EOK;
 
-	if (graph_key_vect == NULL)
+	int32_t rc = AR_EOK;
+	AcdbGraphKeyVector cmd_struct;
+
+	if (graph_key_vect == NULL) {
+		GSL_ERR("graph_key_vect is NULL");
 		return AR_EBADPARAM;
+	}
+
+	/* need to construct AcdbKeyVector because it is packed, gsl_kv isn't */
+	cmd_struct.num_keys = graph_key_vect->num_kvps;
+	cmd_struct.graph_key_vector = (AcdbKeyValuePair *)graph_key_vect->kvp;
+
 	/* query acdb */
-	rc = acdb_ioctl(ACDB_CMD_GET_GRAPH_CAL_KVS, graph_key_vect,
-		sizeof(*graph_key_vect), (void *)data_payload, sizeof(struct gsl_key_vector_list));
+	rc = acdb_ioctl(ACDB_CMD_GET_GRAPH_CAL_KVS, &cmd_struct,
+		sizeof(cmd_struct), (void *)data_payload, sizeof(struct gsl_key_vector_list));
 	if (rc != AR_EOK)
 		GSL_ERR("acdb query ACDB_CMD_GET_GRAPH_CAL_KVS failed %d", rc);
 
@@ -934,10 +944,12 @@ int32_t gsl_get_supported_gkvs(uint32_t *key_ids,
 int32_t gsl_init(struct gsl_init_data *init_data)
 {
 	uint32_t rc = AR_EOK;
-	uint32_t supported_ss_mask;
+	uint32_t supported_ss_mask = 0, tmp_supported_ss_mask = 0;
 	uint32_t i = 0, j = 0;
 	uint32_t num_master_procs = 0;
 	uint32_t *master_procs = NULL;
+	uint32_t num_procs = 0;
+	struct proc_domain_type *proc_domains = NULL;
 	bool_t is_shmem_supported = TRUE;
 
 	ar_log_init();
@@ -1060,6 +1072,9 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 	/* Get all master proc ids */
 	gsl_mdf_utils_get_master_proc_ids(&num_master_procs,
 					  master_procs);
+	gsl_mdf_utils_get_proc_domain_info(&proc_domains, &num_procs);
+	if (!proc_domains)
+		num_procs = 0;
 
 	for (i = 0; i < num_master_procs; i++) {
 		/* perform Spf readiness check */
@@ -1071,6 +1086,15 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 		gsl_mdf_utils_get_supported_ss_info_from_master_proc(
 							master_procs[i],
 							&supported_ss_mask);
+		tmp_supported_ss_mask = supported_ss_mask;
+		/* Reset dynamic PD mask. Dynamic PDs will be handled
+		 * during use case boundary
+		 */
+		for (j = 0; j < num_procs; ++j) {
+			if (proc_domains[j].proc_type == DYNAMIC_PD)
+				supported_ss_mask &=
+					~(GSL_GET_SPF_SS_MASK(proc_domains[j].proc_id));
+		}
 
 		rc = gsl_send_spf_satellite_info(master_procs[i],
 						 supported_ss_mask);
@@ -1079,14 +1103,14 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 			goto mdf_utils_deinit;
 		}
 
-		rc = gsl_spf_ss_state_init(master_procs[i], supported_ss_mask,
+		rc = gsl_spf_ss_state_init(master_procs[i], tmp_supported_ss_mask,
 					   gsl_main_ssr_callback);
 		if (rc) {
 			GSL_ERR("gsl_spf_ss_state_init failed %d", rc);
 			goto mdf_utils_deinit;
 		}
 		/* @TODO: Remove below code once we rely on UP notifications from Spf */
-		gsl_spf_ss_state_set(master_procs[i], 0xFFF,
+		gsl_spf_ss_state_set(master_procs[i], AR_SUB_SYS_IDS_MASK,
 					//GSL_GET_SPF_SS_MASK(master_procs[i]),
 					GSL_SPF_SS_STATE_UP);
 	}
@@ -1102,6 +1126,14 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 							master_procs[i],
 							&supported_ss_mask);
 
+		/* Reset dynamic PD mask. Dynamic PDs will
+		 * be handled during use case boundary
+		 */
+		for (j = 0; j < num_procs; ++j) {
+			if (proc_domains[j].proc_type == DYNAMIC_PD)
+				supported_ss_mask &=
+					~(GSL_GET_SPF_SS_MASK(proc_domains[j].proc_id));
+		}
 		__gpr_cmd_is_shared_mem_supported(master_procs[i], &is_shmem_supported);
 
 		if (is_shmem_supported) {
@@ -1109,7 +1141,7 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 			 * assume all up by now
 			 */
 			rc = gsl_mdf_utils_shmem_alloc(supported_ss_mask,
-								master_procs[i]);
+							master_procs[i]);
 			if ((rc != AR_EOK) && (rc != AR_EUNSUPPORTED)) {
 				GSL_ERR("failed to alloc loaned shmem %d", rc)
 					goto msg_builder_deinit;
