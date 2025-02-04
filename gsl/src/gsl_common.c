@@ -6,7 +6,7 @@
  *      lowest level module within GSL
  *
  * \copyright
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include "gsl_common.h"
@@ -26,6 +26,7 @@ uint32_t gsl_signal_create(struct gsl_signal *sig_p, ar_osal_mutex_t *lock)
 	sig_p->status = 0;
 	sig_p->gpr_packet = NULL;
 	sig_p->lock = lock;
+	sig_p->expected_packet_token = 0;
 
 	return ar_osal_signal_create(&sig_p->sig);
 }
@@ -44,6 +45,7 @@ uint32_t gsl_signal_destroy(struct gsl_signal *sig_p)
 	if (sig_p->gpr_packet)
 		__gpr_cmd_free(sig_p->gpr_packet);
 	sig_p->gpr_packet = NULL;
+	sig_p->expected_packet_token = 0;
 
 	rc = ar_osal_signal_destroy(sig_p->sig);
 	sig_p->sig = NULL;
@@ -79,6 +81,8 @@ uint32_t gsl_signal_timedwait(struct gsl_signal *sig_p, uint32_t timeout_ms,
 		if (sig_p->lock)
 			GSL_MUTEX_UNLOCK(*sig_p->lock);
 	}
+	// clear gpr packet token
+	sig_p->expected_packet_token = 0;
 	return rc;
 }
 
@@ -97,8 +101,17 @@ uint32_t gsl_signal_set(struct gsl_signal *sig_p, uint32_t ev_flags,
 	/* if there was a pending gpr packet that never got consumed free it */
 	if (sig_p->gpr_packet)
 		__gpr_cmd_free(sig_p->gpr_packet);
+	if (gpr_packet && sig_p->expected_packet_token != ((gpr_packet_t *)gpr_packet)->token) {
+		// there is a delay packet received, just ignore it.
+		GSL_ERR("received a delay packet, opcode[0x%x], token 0x%08x, ignore it.",
+			((gpr_packet_t *)gpr_packet)->opcode, ((gpr_packet_t *)gpr_packet)->token);
+		rc = AR_EUNEXPECTED;
+		goto exit;
+	}
 	sig_p->gpr_packet = gpr_packet;
 	rc = ar_osal_signal_set(sig_p->sig);
+
+exit:
 	if (sig_p->lock)
 		GSL_MUTEX_UNLOCK(*sig_p->lock);
 
@@ -167,6 +180,8 @@ int32_t gsl_send_spf_cmd(gpr_packet_t **packet, struct gsl_signal *sig_p,
         	if(sig_p == NULL)
     	        GSL_VERBOSE("sending pkt opcode 0x%x token 0x%08x", opcode, (*packet)->token);
 	}
+	if (sig_p != NULL)
+		sig_p->expected_packet_token = (*packet)->token;
 
 	rc = __gpr_cmd_async_send(*packet);
 	if (rc) {
