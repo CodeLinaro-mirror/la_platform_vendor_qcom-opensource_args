@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 #include <stdio.h>
@@ -262,7 +262,7 @@ int32_t ar_test_pcm_data_logging_commit(ar_heap_info *heap_info)
 
     //parse pkt_data and compare payload
     status = ar_test_verify_message(heap_info,
-        &expected_buffer, ar_test_read_pcm_pkt,
+        &expected_buffer, (ar_test_read_pkt_callback_t) ar_test_read_pcm_pkt,
         ar_test_reassemble_pcm_msg);
 
 end:
@@ -336,7 +336,7 @@ int32_t ar_test_bitstream_data_logging_commit(ar_heap_info *heap_info)
 
     //parse pkt_data and compare payload
     status = ar_test_verify_message(heap_info,
-        &expected_buffer, ar_test_read_bitstream_pkt,
+        &expected_buffer, (ar_test_read_pkt_callback_t) ar_test_read_bitstream_pkt,
         ar_test_reassemble_bitstream_msg);
 
 end:
@@ -398,7 +398,7 @@ int32_t ar_test_generic_data_logging_commit(ar_heap_info *heap_info)
 
     //parse pkt_data and compare payload
     status = ar_test_verify_message(heap_info,
-        &expected_buffer, ar_test_read_generic_pkt,
+        &expected_buffer, (ar_test_read_pkt_callback_t) ar_test_read_generic_pkt,
         ar_test_reassemble_generic_msg);
 
 end:
@@ -545,7 +545,7 @@ int32_t ar_test_pcm_data_logging(ar_heap_info *heap_info)
 
     //parse pkt_data and compare payload
     status = ar_test_verify_message(heap_info,
-        &expected_buffer, ar_test_read_pcm_pkt,
+        &expected_buffer, (ar_test_read_pkt_callback_t) ar_test_read_pcm_pkt,
         ar_test_reassemble_pcm_msg);
 
 end:
@@ -633,7 +633,7 @@ int32_t ar_test_bitstream_data_logging(ar_heap_info *heap_info)
 
     //parse pkt_data and compare payload
     status = ar_test_verify_message(heap_info,
-        &data_buffer, ar_test_read_bitstream_pkt,
+        &data_buffer, (ar_test_read_pkt_callback_t) ar_test_read_bitstream_pkt,
         ar_test_reassemble_bitstream_msg);
 
 end:
@@ -733,7 +733,7 @@ int32_t ar_test_generic_data_logging(ar_heap_info *heap_info)
 
     //parse pkt_data and compare payload
     status = ar_test_verify_message(heap_info,
-        &cal_data_buffer, ar_test_read_generic_pkt,
+        &cal_data_buffer, (ar_test_read_pkt_callback_t) ar_test_read_generic_pkt,
         ar_test_reassemble_generic_msg);
 
 end:
