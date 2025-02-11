@@ -1,5 +1,5 @@
  /*
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 #include <stdio.h>
@@ -71,7 +71,7 @@ void service_state_cb(ar_osal_servreg_t servreg_handle, ar_osal_servreg_cb_event
 }
 
 //service provider to register service states
-int32_t ServiceStateUpate(void *context)
+void ServiceStateUpate(void *context)
 {
     int32_t status = AR_EOK;
     ar_osal_servreg_t sHandle = NULL;
@@ -154,10 +154,10 @@ int32_t ServiceStateUpate(void *context)
         goto end;
     }
 end:
-    return status;
+    return;
 }
 
-int32_t clientServiceListener(void *context)
+void clientServiceListener(void *context)
 {
     int32_t status = AR_EOK;
     ar_osal_servreg_t sHandle = NULL;
@@ -194,7 +194,7 @@ int32_t clientServiceListener(void *context)
     }
 
     //create state update sim thread
-    CreateTestThread(ActiveThreads++, ServiceStateUpate);
+    CreateTestThread(ActiveThreads++, &ServiceStateUpate);
 
     //sleep for service to notify,before deregister.
     ar_osal_micro_sleep(300000);
@@ -213,7 +213,7 @@ int32_t clientServiceListener(void *context)
         goto end;
     }
 end:
-    return status;
+    return;
 }
 
 void ar_test_servreg_main()
@@ -231,7 +231,7 @@ void ar_test_servreg_main()
     }
 
     // create first thread to get domain list and register for service notification.
-    CreateTestThread(ActiveThreads++, clientServiceListener);
+    CreateTestThread(ActiveThreads++, &clientServiceListener);
 
     AR_LOG_INFO(LOG_TAG, "Main thread waiting for threads to exit...");
     for (uint32_t i = 0; i < ActiveThreads; i++)
