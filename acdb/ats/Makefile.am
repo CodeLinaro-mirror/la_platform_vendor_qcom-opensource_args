@@ -89,7 +89,7 @@ if USES_ATS_TRANSPORT_TCPIP
 libar_ats_la_CFLAGS += -DATS_TRANSPORT_TCPIP
 libar_ats_la_CPPFLAGS += -DATS_TRANSPORT_TCPIP
 endif
-libar_ats_la_LDFLAGS = -shared -avoid-version
+libar_ats_la_LDFLAGS = -shared -avoid-version  @LT_VERSION_NUMBER@
 
 AM_CPPFLAGS += -DSOCK_PATH='"/usr/bin/gateway/ats_sockets"' \
         -DSOCK_PATH_SERVER='"/usr/bin/gateway/ats_sockets/unix_sock.server"' \
