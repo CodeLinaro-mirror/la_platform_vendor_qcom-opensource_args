@@ -515,18 +515,23 @@ int32_t gsl_mdf_utils_shmem_free(uint32_t ss_mask)
  * Creates dynamic PD and allocates shared memory.
  */
 int32_t gsl_mdf_utils_register_dynamic_pd(uint32_t ss_mask,
-	uint32_t master_proc_id)
+	uint32_t master_proc_id,  uint32_t *dyn_ss_mask)
 {
 	int32_t rc = AR_EOK;
 	uint32_t sys_id = AR_SUB_SYS_ID_FIRST, tmp_ss_mask = 0, sm = 0;
 	uint32_t tmp_pd_list[AR_SUB_SYS_ID_LAST] = {0}, pd_cnt = 0;
 
+	if (!dyn_ss_mask)
+		return AR_EBADPARAM;
+	*dyn_ss_mask = 0;
 	tmp_ss_mask = ss_mask;
 	while (tmp_ss_mask) {
 		if (GSL_TEST_SPF_SS_BIT(ss_mask, sys_id)) {
 			if (sys_id == master_proc_id ||
 				!gsl_mdf_utils_is_dynamic_pd(sys_id))
 				goto next;
+
+			*dyn_ss_mask |= GSL_GET_SPF_SS_MASK(sys_id);
 			if (pd_init_ref_cnt[sys_id] == 0) {
 				GSL_DBG("initialize dynamic pd %d", sys_id);
 				rc = ar_osal_dyn_pd_init(sys_id);

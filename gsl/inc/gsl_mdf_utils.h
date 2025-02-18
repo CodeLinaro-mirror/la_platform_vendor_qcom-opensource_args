@@ -6,7 +6,7 @@
  * \brief
  *      Multi-DSP framework utilities library
  *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -216,7 +216,7 @@ int32_t gsl_mdf_utils_shmem_free(uint32_t ss_mask);
  * \param[in] master_proc_id: Master proc id
  */
 int32_t gsl_mdf_utils_register_dynamic_pd(uint32_t ss_mask,
-	uint32_t master_proc_id);
+	uint32_t master_proc_id,  uint32_t *dyn_ss_mask);
 
 /*
  * \brief Releases dynamic PD and deallocates shared memory for given
