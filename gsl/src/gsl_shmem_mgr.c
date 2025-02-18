@@ -5,7 +5,7 @@
  *      Manages shared memory allocations across all graphs in the system
  *
  * \copyright
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <stdint.h>
@@ -134,6 +134,7 @@ struct gsl_shmem_bin {
 	struct ar_list_t page_list;
 };
 
+#define MAX_PENDING_MEMMAP_PACKETS 3
 struct gsl_shmem_mgr_ctxt {
 	/** lock used to synchronize alloc and free operations */
 	ar_osal_mutex_t mutex;
@@ -165,6 +166,26 @@ struct gsl_shmem_mgr_ctxt {
 	 * lock used in conjuction with above signal
 	 */
 	 ar_osal_mutex_t sig_lock;
+	/**
+	 * gpr unconsumed pending memory map packet pointer
+	 */
+	void *pending_memmap_packet_list[MAX_PENDING_MEMMAP_PACKETS];
+	/**
+	 * gpr unconsumed pending memory map handle
+	 */
+	uint32_t pending_memmap_handle_list[MAX_PENDING_MEMMAP_PACKETS];
+	/**
+	 * gpr unconsumed pending memory map packet list index
+	 */
+	int32_t pending_memmap_packet_index;
+	/**
+	 * cache gpr memory map shared memory info flags if error happened
+	 */
+	uint32_t error_memmap_shmem_info_flags;
+	/**
+	 * gpr memory map count
+	 */
+	int32_t memmap_count;
 };
 
 #ifdef GSL_SHMEM_MGR_STATS_ENABLE
@@ -210,6 +231,33 @@ static uint32_t gsl_shmem_gpr_callback(gpr_packet_t *packet, void *cb_data)
 	cb_data; /* Referencing to keep compiler happy */
 
 	if (ctxt[master_proc] != NULL) {
+		if (ctxt[master_proc]->sig.gpr_packet) {
+			// if there was a pending gpr packet that never got consumed
+			gpr_packet_t *unconsumed_packet =
+						(gpr_packet_t *)ctxt[master_proc]->sig.gpr_packet;
+			if (unconsumed_packet->opcode == APM_CMD_RSP_SHARED_MEM_MAP_REGIONS &&
+				ctxt[master_proc]->memmap_count > 0) {
+				/**
+				 * the uncomsumed gpr packet was for memory map, need to
+				 * unmap it from spf. Since it's not good to handle in the
+				 * callback here which may break the sequence. So, cache the
+				 * unconsumed pending packet and unmap it later.
+				 */
+				gsl_shmem_cache_pending_memmap_packets(master_proc,
+					ctxt[master_proc]->sig.gpr_packet);
+			}
+		}
+		if (packet->token != ctxt[master_proc]->sig.expected_packet_token) {
+			// there is a delay packet received which may be caused by timeout before.
+			if (packet->opcode == APM_CMD_RSP_SHARED_MEM_MAP_REGIONS &&
+				ctxt[master_proc]->memmap_count > 0) {
+				/**
+				 * same way to cache the delay memory map rsp packet
+				 * and unmap it later
+				 */
+				gsl_shmem_cache_pending_memmap_packets(master_proc, (void *)packet);
+			}
+		}
 		rc = gsl_signal_set(&ctxt[master_proc]->sig, GSL_SIG_EVENT_MASK_SPF_RSP,
 				AR_EOK, packet);
 		if (rc)
@@ -309,6 +357,9 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 		spf_ss_map_mask)
 			return AR_ENOTREADY;
 
+	// check if there are some peneding memmap packets need to be unmmaped.
+	gsl_shmem_check_and_unmap_cache_pending_packets(master_proc_id);
+
 	/* first map to master (assumed to be adsp currently) */
 	if (GSL_TEST_SPF_SS_BIT(spf_ss_map_mask, master_proc_id)) {
 		/*
@@ -363,6 +414,7 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 		GSL_LOG_PKT("send_pkt", GSL_SHMEM_SRC_PORT, send_pkt,
 			sizeof(*send_pkt) +	sizeof(*mmap), NULL, 0);
 
+		ctxt[master_proc_id]->memmap_count++;
 		rc = gsl_send_spf_cmd(&send_pkt, &ctxt[master_proc_id]->sig, &rsp_pkt);
 		if (rc) {
 			GSL_ERR("send spf cmd failed with err %d", rc);
@@ -419,7 +471,24 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 			if (flags & GSL_SHMEM_LOANED)
 				mmap_sat->mmap_header.property_flag |=
 				APM_MEMORY_MAP_BIT_MASK_IS_MEM_LOANED;
-
+			/*
+			 * For dynamic PD set address type to indicate
+			 *  - DSP to use safe heap
+			 *  - gpr kernel driver to skip conversion to physical address and pass
+			 *    the handle as is to DSP.
+			 */
+			for (int32_t i = 0; i < AR_SUB_SYS_ID_LAST; i++) {
+				if (page->ss_id_list[i].proc_id == sys_id &&
+					page->ss_id_list[i].proc_type == DYNAMIC_PD) {
+					mmap_sat->mmap_header.property_flag |=
+						APM_MEMORY_MAP_LOANED_MEMORY_HEAP_MNGR_TYPE_SAFE_HEAP <<
+							APM_MEMORY_MAP_SHIFT_LOANED_MEMORY_HEAP_MNGR_TYPE;
+					mmap_sat->mmap_header.property_flag |=
+						APM_MEMORY_MAP_MEMORY_ADDRESS_TYPE_FD <<
+							APM_MEMORY_MAP_SHIFT_MEMORY_ADDRESS_TYPE;
+					break;
+				}
+			}
 			mmap_sat->mmap_payload.shm_addr_lsw = page->shmem_info.ipa_lsw;
 			mmap_sat->mmap_payload.shm_addr_msw = page->shmem_info.ipa_msw;
 			mmap_sat->mmap_payload.mem_size_bytes = page->size_bytes;
@@ -454,6 +523,9 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 	}
 
 exit:
+	if (rc){
+		ctxt[master_proc_id]->error_memmap_shmem_info_flags = page->shmem_info.flags;
+	}
 	return rc;
 }
 
@@ -538,6 +610,7 @@ static int32_t gsl_shmem_unmap_page_from_spf(struct gsl_shmem_page *page,
 
 		GSL_LOG_PKT("send_pkt", GSL_SHMEM_SRC_PORT, send_pkt,
 			sizeof(*send_pkt) +	sizeof(*payload), NULL, 0);
+		ctxt[master_proc_id]->memmap_count--;
 		rc = gsl_send_spf_cmd(&send_pkt, &ctxt[master_proc_id]->sig, &rsp_pkt);
 		if (rc || !rsp_pkt) {
 			if (rsp_pkt)
@@ -1240,6 +1313,113 @@ void gsl_shmem_remap_pre_alloc(uint32_t master_proc_id)
 		gsl_shmem_map_page_to_spf(page, 0, page->spf_ss_mask);
 		iter = iter->next;
 	}
+}
+
+void gsl_shmem_cache_pending_memmap_packets(uint32_t master_proc_id, void *gpr_packet)
+{
+	for (int i = 0; i < MAX_PENDING_MEMMAP_PACKETS; i++) {
+		//check if the packet is duplicated
+		if(ctxt[master_proc_id]->pending_memmap_packet_list[i] &&
+			((struct gpr_packet_t *)ctxt[master_proc_id]->
+			pending_memmap_packet_list[i])->token ==
+			((struct gpr_packet_t *)gpr_packet)->token) {
+			return;
+		}
+	}
+	int32_t index = ctxt[master_proc_id]->pending_memmap_packet_index;
+	struct apm_cmd_rsp_shared_mem_map_regions_t *mmap_regions;
+	mmap_regions = GPR_PKT_GET_PAYLOAD(
+                    struct apm_cmd_rsp_shared_mem_map_regions_t, gpr_packet);
+
+	if (!ctxt[master_proc_id]->pending_memmap_packet_list[index])
+		ctxt[master_proc_id]->pending_memmap_packet_list[index] =
+			(struct gpr_packet_t *)gsl_mem_zalloc(sizeof(struct gpr_packet_t));
+	if (ctxt[master_proc_id]->pending_memmap_packet_list[index]) {
+		gsl_memcpy(ctxt[master_proc_id]->pending_memmap_packet_list[index],
+			sizeof(struct gpr_packet_t),
+			gpr_packet,
+			sizeof(struct gpr_packet_t));
+		ctxt[master_proc_id]->pending_memmap_handle_list[index] =
+			mmap_regions->mem_map_handle;
+	} else {
+		GSL_ERR("Failed to allocate mem for caching the pending memory packet!");
+		return;
+	}
+	if (++index == MAX_PENDING_MEMMAP_PACKETS) {
+		GSL_INFO("Warning: buffer limit exceeded. Resetting index to 0.");
+		index = 0;
+	}
+	ctxt[master_proc_id]->pending_memmap_packet_index = index;
+}
+
+uint32_t gsl_shmem_check_and_unmap_cache_pending_packets(uint32_t master_proc_id) {
+	int32_t rc = AR_EOK;
+	gpr_packet_t *unmap_send_pkt = NULL, *unmap_rsp_pkt = NULL;
+	gpr_packet_t *pending_pkt = NULL;
+	uint8_t cma_client_data = 0;
+	struct apm_cmd_shared_mem_unmap_regions_t *unmap_payload;
+	for (int i = 0; i < MAX_PENDING_MEMMAP_PACKETS &&
+			ctxt[master_proc_id]->pending_memmap_packet_list[i]; i++) {
+		pending_pkt = (gpr_packet_t *)ctxt[master_proc_id]->pending_memmap_packet_list[i];
+		if ((ctxt[master_proc_id]->error_memmap_shmem_info_flags &
+			(AR_SHMEM_BIT_MASK_HW_ACCELERATOR_FLAG
+			<< AR_SHMEM_SHIFT_HW_ACCELERATOR_FLAG)) != 0) {
+				cma_client_data = GSL_GPR_CMA_FLAG_BIT;
+			} else {
+				cma_client_data = 0;
+			}
+		switch (pending_pkt->opcode) {
+			case APM_CMD_RSP_SHARED_MEM_MAP_REGIONS:
+				if (ctxt[master_proc_id]->memmap_count == 0) {
+					GSL_DBG("the pending packet has been handled.");
+					break;
+				}
+				rc = gsl_allocate_gpr_packet(APM_CMD_SHARED_MEM_UNMAP_REGIONS,
+							GSL_SHMEM_SRC_PORT, APM_MODULE_INSTANCE_ID,
+							sizeof(*unmap_payload), 0,
+							pending_pkt->src_domain_id,
+							&unmap_send_pkt);
+				if (rc) {
+					GSL_ERR("Failed to allocate GPR packet %d", rc);
+					break;
+				}
+				unmap_payload =
+					GPR_PKT_GET_PAYLOAD(struct
+						apm_cmd_shared_mem_unmap_regions_t,
+						unmap_send_pkt);
+				unmap_payload->mem_map_handle =
+					ctxt[master_proc_id]->pending_memmap_handle_list[i];
+				unmap_send_pkt->client_data |= cma_client_data;
+				GSL_LOG_PKT("send_pkt", GSL_SHMEM_SRC_PORT,
+						unmap_send_pkt,
+						sizeof(*unmap_send_pkt) +
+						sizeof(*unmap_payload),
+						NULL, 0);
+				ctxt[master_proc_id]->memmap_count--;
+				rc = gsl_send_spf_cmd(&unmap_send_pkt,
+								&ctxt[master_proc_id]->sig,
+								&unmap_rsp_pkt);
+				if (rc || !unmap_rsp_pkt) {
+					if (unmap_rsp_pkt)
+						__gpr_cmd_free(unmap_rsp_pkt);
+					break;
+				}
+				rc = gsl_shmem_handle_rsp(unmap_rsp_pkt,
+					pending_pkt->src_domain_id, GPR_IBASIC_RSP_RESULT);
+				gsl_mem_free(ctxt[master_proc_id]->pending_memmap_packet_list[i]);
+				ctxt[master_proc_id]->pending_memmap_packet_list[i] = NULL;
+				break;
+
+			default:
+				GSL_ERR("unsupported opcode %d encountered in unmap pending mem packet from spf",
+					pending_pkt->opcode);
+				rc = AR_EFAILED;
+				break;
+		};
+	}
+
+exit:
+	return rc;
 }
 
 /*
