@@ -119,14 +119,19 @@ static int32_t ar_shmem_map_dynamic_pd(ar_shmem_info *info, bool_t map)
     }
     for (i = 0; i < info->num_sys_id; ++i) {
         if (info->sys_id[i].proc_type == DYNAMIC_PD) {
-            if (map)
+            if (map) {
                 status = fastrpc_mmap(ar_dsp_domain_id[info->sys_id[i].proc_id],
                                       info->ipa_lsw, info->vaddr, 0,
                                       info->buf_size, FASTRPC_MAP_FD);
-            else
-                status = fastrpc_munmap(ar_dsp_domain_id[info->sys_id[i].proc_id],
-                                        info->ipa_lsw, info->vaddr,
-                                        info->buf_size);
+            } else {
+                if (info->sys_id[i].is_active)
+                    status = fastrpc_munmap(ar_dsp_domain_id[info->sys_id[i].proc_id],
+                                            info->ipa_lsw, info->vaddr,
+                                            info->buf_size);
+                else
+                    AR_LOG_DEBUG(AR_OSAL_SHMEM_LOG_TAG,"%s: skip unmap as pd %d is down",
+                        __func__, info->sys_id[i].proc_id);
+            }
             if (status) {
                 AR_LOG_ERR(AR_OSAL_SHMEM_LOG_TAG, "%s:fastrpc_%s failed status %d",
                 __func__, map ? "mmap" : "munmap", status);

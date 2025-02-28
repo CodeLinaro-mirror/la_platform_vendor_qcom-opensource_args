@@ -6,7 +6,7 @@
  * \brief
  *     Defines public APIs for shared memory allocation for DSP.
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -63,6 +63,7 @@ typedef enum ar_shmem_pd_type
 typedef struct ar_shmem_proc_info_t {
 	uint8_t proc_id;
 	ar_shmem_pd_type_t proc_type;
+	bool_t is_active;
 } ar_shmem_proc_info;
 
  /**
