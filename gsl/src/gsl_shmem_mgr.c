@@ -5,7 +5,7 @@
  *      Manages shared memory allocations across all graphs in the system
  *
  * \copyright
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <stdint.h>
@@ -419,7 +419,24 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 			if (flags & GSL_SHMEM_LOANED)
 				mmap_sat->mmap_header.property_flag |=
 				APM_MEMORY_MAP_BIT_MASK_IS_MEM_LOANED;
-
+			/*
+			 * For dynamic PD set address type to indicate
+			 *  - DSP to use safe heap
+			 *  - gpr kernel driver to skip conversion to physical address and pass
+			 *    the handle as is to DSP.
+			 */
+			for (int32_t i = 0; i < AR_SUB_SYS_ID_LAST; i++) {
+				if (page->ss_id_list[i].proc_id == sys_id &&
+					page->ss_id_list[i].proc_type == DYNAMIC_PD) {
+					mmap_sat->mmap_header.property_flag |=
+						APM_MEMORY_MAP_LOANED_MEMORY_HEAP_MNGR_TYPE_SAFE_HEAP <<
+							APM_MEMORY_MAP_SHIFT_LOANED_MEMORY_HEAP_MNGR_TYPE;
+					mmap_sat->mmap_header.property_flag |=
+						APM_MEMORY_MAP_MEMORY_ADDRESS_TYPE_FD <<
+							APM_MEMORY_MAP_SHIFT_MEMORY_ADDRESS_TYPE;
+					break;
+				}
+			}
 			mmap_sat->mmap_payload.shm_addr_lsw = page->shmem_info.ipa_lsw;
 			mmap_sat->mmap_payload.shm_addr_msw = page->shmem_info.ipa_msw;
 			mmap_sat->mmap_payload.mem_size_bytes = page->size_bytes;
