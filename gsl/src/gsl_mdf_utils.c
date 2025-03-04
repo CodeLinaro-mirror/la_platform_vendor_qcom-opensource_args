@@ -442,6 +442,13 @@ int32_t gsl_mdf_utils_shmem_alloc(uint32_t ss_mask, uint32_t master_proc)
 			}
 			ss_mask &= ~tmp_ss_mask;
 			continue;
+		} else if (grp->ss_restarted_flags) {
+			/*
+			 * ss_restarted_flags is used to indicate if remap
+			 * is needed for allocated loaned shmem. If there's
+			 * no loaned shmem allocated, this flag can be reset.
+			 */
+			grp->ss_restarted_flags = 0;
 		}
 
 		tmp_ss_mask = grp->ss_mask & ss_mask;
