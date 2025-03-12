@@ -8,7 +8,7 @@
 *      Processes data for the ACDB SW commands.
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *=============================================================================
@@ -61,30 +61,6 @@ struct _acdb_property_t
     /**< The property data */
     uint8_t* property_data;
 };
-
-typedef struct _acdb_proc_domain_module_list_t AcdbProcDomainModuleList;
-#include "acdb_begin_pack.h"
-struct _acdb_proc_domain_module_list_t
-{
-	uint32_t proc_domain_id;
-	uint32_t module_count;
-	AcdbModuleInstance module_list[0];
-}
-#include "acdb_end_pack.h"
-;
-
-typedef struct _acdb_subgraph_proc_domain_module_map_t
-AcdbSubgraphPdmMap;
-#include "acdb_begin_pack.h"
-struct _acdb_subgraph_proc_domain_module_map_t
-{
-	uint32_t subgraph_id;
-	uint32_t proc_count;
-	uint32_t size;
-	AcdbProcDomainModuleList *proc_info;
-}
-#include "acdb_end_pack.h"
-;
 
 typedef struct _acdb_blob_module_info_t AcdbBlobModuleInfo;
 #include "acdb_begin_pack.h"
