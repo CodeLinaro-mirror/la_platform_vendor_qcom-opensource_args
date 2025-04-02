@@ -34,8 +34,14 @@
 
 /* Memory pointer to be 4K aligned for ADSP, MDSP,SDSP and CDSP */
 #define  SHMEM_4K_ALIGNMENT       0x1000
+
+#ifndef ION_DRIVER_UNSUPPORTED
 #define ION_DRIVER_PATH "/dev/msm_audio_ion"
 #define ION_DRIVER_PATH_CMA "/dev/msm_audio_ion_cma"
+#else
+#define ION_DRIVER_PATH "/dev/msm_audio_mem"
+#define ION_DRIVER_PATH_CMA "/dev/msm_audio_mem_cma"
+#endif
 
 /* Systems without SMMU use AUDIO_HEAP for ion allocations */
 #ifdef USE_AUDIO_HEAP_ID

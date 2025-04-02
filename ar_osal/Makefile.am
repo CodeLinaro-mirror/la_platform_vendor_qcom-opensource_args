@@ -4,7 +4,21 @@ EXTRA_DIST = $(pkgconfig_DATA)
 
 AM_CFLAGS = -Wall -Wno-pointer-to-int-cast -Wno-error=unused-function \
             -Wno-error=unused-label
-AM_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\) -DLINUX_ENABLED
+AM_CFLAGS += @QMIF_CFLAGS@
+AM_CFLAGS += @PDMAPPER_CFLAGS@
+AM_CFLAGS += @PDNOTIFIER_CFLAGS@
+AM_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\) -DLINUX_ENABLED \
+             -DAR_OSAL_USE_PD_NOTIFIER
+
+if WITHOUT_SPF_RESTART
+AM_CFLAGS += -DAR_OSAL_SPF_RESTART_DISABLED
+endif
+
+AM_CFLAGS += -I$(srcdir)/api
+AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-mapper/libpdmapper
+AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-notifier/libpdnotifier
+AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-notifier/pd-notifier-idl
+AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-mapper/pd-mapper-idl
 
 AM_CFLAGS += -I$(srcdir)/api \
              -I$(top_srcdir)/acdb/ats/transports/diag/linux/inc/
@@ -56,7 +70,7 @@ if ARGS_USE_SYSLOG
 AM_CFLAGS += -DAR_OSAL_USE_SYSLOG
 endif
 
-libar_osal_la_LIBADD = -lrt -lpthread
+libar_osal_la_LIBADD = -lrt -lpthread @QMIF_LIBS@ @PDMAPPER_LIBS@ @PDNOTIFIER_LIBS@
 
 if CUTILS_SUPPORTED
 libar_osal_la_LIBADD += -lcutils
@@ -65,7 +79,15 @@ endif
 
 if USE_GLIB
 libar_osal_la_LIBADD += -lglib-2.0
-AM_CFLAGS += $(GLIB_CFLAGS) -D_GNU_SOURCE -Dstrlcat=g_strlcat -Dstrlcpy=g_strlcpy -include glib.h
+AM_CFLAGS += $(GLIB_CFLAGS) -D_GNU_SOURCE -include glib.h
+endif
+
+if NO_STRLCPY_STRLCAT
+AM_CFLAGS += -Dstrlcpy=g_strlcpy -Dstrlcat=g_strlcat
+endif
+
+if ION_DRIVER_NOT_SUPPORTED
+AM_CFLAGS += -DION_DRIVER_UNSUPPORTED
 endif
 
 lib_includedir = $(includedir)
@@ -81,3 +103,10 @@ libar_osal_la_CFLAGS += @LIBION_CFLAGS@
 endif
 
 libar_osal_la_LDFLAGS = -shared -avoid-version
+
+if !USE_DUMMY_DIAG
+AM_CFLAGS += @DIAG_CFLAGS@
+libar_osal_la_LDFLAGS += @DIAG_LIBS@
+else
+AM_CFLAGS += -I$(top_srcdir)/acdb/ats/transports/diag/linux/inc/
+endif
