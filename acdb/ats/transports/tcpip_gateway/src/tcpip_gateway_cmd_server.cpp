@@ -791,6 +791,10 @@ int32_t TcpipGatewayServer::run()
 	}
 
 	config = (tgws_config_t*)ar_heap_malloc(sizeof(tgws_config_t), &heap_inf);
+	if (!config){
+		GATEWAY_ERR("Error allocating memory for gateway config");
+		return AR_ENOMEMORY;
+	}
 	config->option = this->option;// TGWS_CONNECTION_OPTION_USB;
 	config->port = pc_port;
 	// config->port_str = str_pc_port.c_str();
