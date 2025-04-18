@@ -3,7 +3,7 @@
  *
  * This file has implementation platform wrapper for the GPR datalink layer
  *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #define LOG_TAG "gpr_lx_wrapper"
@@ -94,6 +94,8 @@ GPR_INTERNAL uint32_t gpr_drv_init(void)
    uint32_t num_packet_pools =
              sizeof(gpr_lx_packet_pool_table)/sizeof(gpr_packet_pool_info_v2_t);
 
+   /* Reset to 0 to avoid wrong value when gpr_drv_init called multiple times due to failure */
+   num_domains = 0;
    memset(&gpr_lx_ipc_dl_table[0], 0, (sizeof(struct ipc_dl_v2_t) * GPR_PL_NUM_TOTAL_DOMAINS_V));
 
    gpr_lx_ipc_dl_table[num_domains].domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
