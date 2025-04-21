@@ -24,6 +24,7 @@ AM_CFLAGS += -I$(srcdir)/api \
              -I$(top_srcdir)/acdb/ats/transports/diag/linux/inc/
 
 osal_sources = ./api/ar_osal_error.h \
+               ./api/ar_osal_dyn_pd.h \
                ./api/ar_osal_file_io.h \
                ./api/ar_osal_heap.h \
                ./api/ar_osal_log.h \
@@ -49,6 +50,8 @@ osal_c_sources = ./src/linux/ar_osal_file_io.c \
                  ./src/linux/ar_osal_string.c \
                  ./src/linux/ar_osal_thread.c \
                  ./src/linux/ar_osal_timer.c \
+                 ./src/linux/qcom/dyn_pd/ar_osal_dyn_pd.c \
+                 ./src/linux/qcom/dyn_pd/cdsp_dyn_pd_stub.c \
                  ./src/linux/qcom/ar_osal_servreg.c
 
 
@@ -102,7 +105,7 @@ libar_osal_la_LIBADD += -lion
 libar_osal_la_CFLAGS += @LIBION_CFLAGS@
 endif
 
-libar_osal_la_LDFLAGS = -shared -avoid-version
+libar_osal_la_LDFLAGS = -shared -avoid-version -ladsprpc
 
 if !USE_DUMMY_DIAG
 AM_CFLAGS += @DIAG_CFLAGS@
