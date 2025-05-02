@@ -197,7 +197,7 @@ void *receiver_thread_loop(void *priv_data)
 {
     uint32_t status;
     int32_t receive_size;
-    void *buf;
+    void *buf = NULL;
     uint32_t *temp;
     gpr_dl_lx_port_t *dl_lx_port = (gpr_dl_lx_port_t *)priv_data;
     struct pollfd *pfd;
