@@ -472,17 +472,13 @@ static int32_t gsl_shmem_map_page_to_spf(struct gsl_shmem_page *page,
 				mmap_sat->mmap_header.property_flag |=
 				APM_MEMORY_MAP_BIT_MASK_IS_MEM_LOANED;
 			/*
-			 * For dynamic PD set address type to indicate
-			 *  - DSP to use safe heap
-			 *  - gpr kernel driver to skip conversion to physical address and pass
-			 *    the handle as is to DSP.
+			 * For dynamic PD indicate gpr kernel driver to skip conversion
+			 * to physical address and pass the handle as is to DSP by setting
+			 * address type.
 			 */
 			for (int32_t i = 0; i < AR_SUB_SYS_ID_LAST; i++) {
 				if (page->ss_id_list[i].proc_id == sys_id &&
 					page->ss_id_list[i].proc_type == DYNAMIC_PD) {
-					mmap_sat->mmap_header.property_flag |=
-						APM_MEMORY_MAP_LOANED_MEMORY_HEAP_MNGR_TYPE_SAFE_HEAP <<
-							APM_MEMORY_MAP_SHIFT_LOANED_MEMORY_HEAP_MNGR_TYPE;
 					mmap_sat->mmap_header.property_flag |=
 						APM_MEMORY_MAP_MEMORY_ADDRESS_TYPE_FD <<
 							APM_MEMORY_MAP_SHIFT_MEMORY_ADDRESS_TYPE;
@@ -686,12 +682,16 @@ static int32_t allocate_page(uint32_t page_size, uint32_t bin_idx,
 	while (tmp_spf_ss_mask) {
 		if (GSL_TEST_SPF_SS_BIT(spf_ss_mask, sys_id)) {
 			page->ss_id_list[page->shmem_info.num_sys_id].proc_id = sys_id;
-			if (GSL_TEST_SPF_SS_BIT(dynamic_proc_ss_mask, sys_id))
-				page->ss_id_list[page->shmem_info.num_sys_id++].proc_type =
+			if (GSL_TEST_SPF_SS_BIT(dynamic_proc_ss_mask, sys_id)) {
+				page->ss_id_list[page->shmem_info.num_sys_id].proc_type =
 					DYNAMIC_PD;
-			else
-				page->ss_id_list[page->shmem_info.num_sys_id++].proc_type =
+				page->ss_id_list[page->shmem_info.num_sys_id].is_active =
+					TRUE;
+			} else {
+				page->ss_id_list[page->shmem_info.num_sys_id].proc_type =
 					STATIC_PD;
+			}
+			++page->shmem_info.num_sys_id;
 		}
 		++sys_id;
 		tmp_spf_ss_mask >>= 1;
@@ -794,6 +794,7 @@ static int32_t free_page(int32_t bin_idx,
 {
 	int32_t rc = AR_EOK, rc1 = AR_EOK;
 	uint32_t master_proc_id = page->master_proc;
+	uint32_t sys_id = AR_SUB_SYS_ID_FIRST;
 	struct gsl_shmem_bin *bin = &ctxt[master_proc_id]->bins[bin_idx];
 
 	rc = gsl_shmem_unmap_page_from_spf(page, page->spf_ss_mask);
@@ -801,7 +802,22 @@ static int32_t free_page(int32_t bin_idx,
 		GSL_ERR("failed to unmap page from spf %d", rc);
 		rc1 = rc;
 	}
-
+	/*
+	 * Dynamic pd DSP unmap happens in OSAL. If this page is getting
+	 * freed during pd is down, indicate OSAL to skip sending unmap
+	 * command to DSP.
+	 */
+	if ((gsl_spf_ss_state_get(master_proc_id) & page->spf_ss_mask) !=
+		page->spf_ss_mask) {
+		while (sys_id < AR_SUB_SYS_ID_LAST) {
+			if (page->ss_id_list[sys_id].proc_type == DYNAMIC_PD) {
+				GSL_DBG("set pd down flag for proc_id %d",
+					page->ss_id_list[sys_id].proc_id);
+				page->ss_id_list[sys_id].is_active = FALSE;
+			}
+			++sys_id;
+		}
+	}
 	/* if this is a CMA page, hyp-unassign here */
 	if ((page->shmem_info.flags & (AR_SHMEM_BIT_MASK_HW_ACCELERATOR_FLAG
 		<< AR_SHMEM_SHIFT_HW_ACCELERATOR_FLAG)) != 0)
@@ -1500,8 +1516,10 @@ int32_t gsl_shmem_map_dynamic_pd(struct gsl_shmem_alloc_data *alloc_data,
 		if (GSL_TEST_SPF_SS_BIT(ss_mask, sys_id)) {
 			page->ss_id_list[page->shmem_info.num_sys_id].proc_id =
 				sys_id;
-			page->ss_id_list[page->shmem_info.num_sys_id++].proc_type =
+			page->ss_id_list[page->shmem_info.num_sys_id].proc_type =
 				DYNAMIC_PD;
+			page->ss_id_list[page->shmem_info.num_sys_id++].is_active =
+				TRUE;
 			dyn_pd_list[dyn_pd_cnt++] = sys_id;
 		}
 		++sys_id;
@@ -1560,8 +1578,12 @@ int32_t gsl_shmem_unmap_dynamic_pd(struct gsl_shmem_alloc_data *alloc_data,
 		if (GSL_TEST_SPF_SS_BIT(ss_mask, sys_id)) {
 			page->ss_id_list[page->shmem_info.num_sys_id].proc_id =
 				sys_id;
-			page->ss_id_list[page->shmem_info.num_sys_id++].proc_type =
+			page->ss_id_list[page->shmem_info.num_sys_id].proc_type =
 				DYNAMIC_PD;
+			/* Skip unmap command to DSP if proc is down */
+			if ((gsl_spf_ss_state_get(page->master_proc) & ss_mask) != ss_mask)
+				page->ss_id_list[page->shmem_info.num_sys_id].is_active = FALSE;
+			++page->shmem_info.num_sys_id;
 		}
 		++sys_id;
 		tmp_ss_mask >>= 1;

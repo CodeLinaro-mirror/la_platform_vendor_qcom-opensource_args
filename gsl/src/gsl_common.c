@@ -201,6 +201,9 @@ int32_t gsl_send_spf_cmd(gpr_packet_t **packet, struct gsl_signal *sig_p,
 		if (opcode == APM_CMD_GRAPH_OPEN) {
 			rc = gsl_signal_timedwait(sig_p, GSL_GRAPH_OPEN_TIMEOUT_MS,
 				&ev_flags, &spf_status, rsp_pkt);
+		} else if (opcode == APM_CMD_GRAPH_START || opcode == APM_CMD_GRAPH_STOP) {
+			rc = gsl_signal_timedwait(sig_p, GSL_GRAPH_START_STOP_TIMEOUT_MS,
+				&ev_flags, &spf_status, rsp_pkt);
 		} else {
 			rc = gsl_signal_timedwait(sig_p, GSL_SPF_TIMEOUT_MS, &ev_flags,
 				&spf_status, rsp_pkt);
@@ -294,6 +297,9 @@ int32_t gsl_send_spf_satellite_info(uint32_t proc_id,
 	apm_cmd_header_t *apm_hdr;
 	apm_param_id_satellite_pd_info_t *sat_pd_info;
 	apm_module_param_data_t *param_hdr;
+
+	if (supported_ss_mask == (uint32_t) GSL_GET_SPF_SS_MASK(proc_id))
+		return AR_EOK;
 
 	gpr_args.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
 	gpr_args.dst_domain_id = (uint8_t) proc_id;
