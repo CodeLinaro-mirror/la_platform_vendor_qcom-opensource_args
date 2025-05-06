@@ -67,6 +67,12 @@ libar_osal_la_LIBADD += -lglib-2.0
 AM_CFLAGS += $(GLIB_CFLAGS) -D_GNU_SOURCE -Dstrlcat=g_strlcat -Dstrlcpy=g_strlcpy -include glib.h
 endif
 
+if USE_DUMMY_DIAG
+libar_osal_la_LIBADD += -llog
+else
+libar_osal_la_LIBADD += -llog -ldiag
+endif
+
 lib_includedir = $(includedir)
 lib_include_HEADERS = $(osal_sources)
 lib_LTLIBRARIES = libar-osal.la
