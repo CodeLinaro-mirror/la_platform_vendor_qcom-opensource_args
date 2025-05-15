@@ -12,7 +12,6 @@
 #include "ar_osal_error.h"
 #include "ar_osal_log.h"
 #include "comdef.h"
-#include "diag_lsm.h"
 #include "log.h"
 
 /**<

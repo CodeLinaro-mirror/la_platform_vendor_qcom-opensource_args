@@ -53,9 +53,9 @@ AC_ARG_WITH([cutils],
 AM_CONDITIONAL([CUTILS_SUPPORTED], [test "x${with_cutils}" = "xyes"])
 
 AC_ARG_WITH([ats_transport_tcp_ip],
-    AS_HELP_STRING([Use ats transport TCP/IP (default is yes)]),
+    AS_HELP_STRING([Use ats transport TCP/IP (default is no)]),
      [with_ats_transport_tcp_ip=$withval],
-     [with_ats_transport_tcp_ip=yes])
+     [with_ats_transport_tcp_ip=no])
 AM_CONDITIONAL([USES_ATS_TRANSPORT_TCPIP], [test "x${with_ats_transport_tcp_ip}" = "xyes"])
 
 AC_ARG_WITH([dummy_diag],
