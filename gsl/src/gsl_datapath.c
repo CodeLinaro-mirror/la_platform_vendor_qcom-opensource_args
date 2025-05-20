@@ -566,6 +566,10 @@ void gsl_handle_hpcm_buff_done(struct gsl_graph *graph, gpr_packet_t *packet, vo
 		goto exit;
 	}
 
+	if (!dp_info){
+        GSL_ERR("Unable to appropriate RD/WR datapath");
+        goto exit;
+	}
 	data_mode = dp_info->config.attributes & GSL_ATTRIBUTES_DATA_MODE_MASK;
 
 	if (data_mode == GSL_DATA_MODE_BLOCKING) {
