@@ -169,6 +169,7 @@ uint32_t put_buffer(gpr_dl_lx_port_t *dl_lx_port, void *buf)
     list_for_each_safe(item, temp_node, &dl_lx_port->buff_list) {
         if (item == NULL) {
             AR_LOG_ERR(LOG_TAG,"%s:%d item is NULL", __func__, __LINE__);
+            pthread_mutex_unlock(&dl_lx_port->buff_list_lock);
             return AR_EFAILED;
         }
         buffer_node = node_to_item(item, gpr_dl_lx_buf_t, node);
