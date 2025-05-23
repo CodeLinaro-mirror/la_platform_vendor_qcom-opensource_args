@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -Wall \
             -Wundef \
             -O2
-AM_CFLAGS += @GLIB_CFLAGS@ -Dstrlcpy=g_strlcpy -Dstrlcat=g_strlcat -include glib.h
+AM_CFLAGS += -DMCS_ENABLED
 
 AM_CFLAGS += -I$(top_srcdir)/ar_osal/api \
              -I$(top_srcdir)/acdb/api \
@@ -34,7 +34,8 @@ AM_CFLAGS += -I ${srcdir}/inc \
 
 AM_CPPFLAGS = $(AM_CFLAGS)
 
-ats_headers = ./api/ats.h
+ats_headers = ./api/ats.h \
+              ./mcs/common/api/mcs_api.h
 
 ats_c_sources = ./src/ats.c \
                 ./src/ats_command.c \
@@ -68,6 +69,15 @@ libar_ats_la_LIBADD += -lcutils
 AM_CFLAGS += -DAR_ATS_USE_CUTILS
 endif
 
+if USE_GLIB
+libar_ats_la_LIBADD += -lglib-2.0
+AM_CFLAGS += $(GLIB_CFLAGS) -include glib.h
+endif
+
+if NO_STRLCPY_STRLCAT
+AM_CFLAGS += -Dstrlcpy=g_strlcpy -Dstrlcat=g_strlcat
+endif
+
 if USE_DUMMY_DIAG
 AM_CFLAGS += -DATS_USES_DUMMY_DIAG \
              -I ${srcdir}/transports/diag/linux/inc
@@ -95,7 +105,6 @@ AM_CPPFLAGS += -I$(srcdir)/transports/tcpip_gateway/inc
 AM_CPPFLAGS += -I$(top_srcdir)/ar_osal/api
 AM_CPPFLAGS += -I$(top_srcdir)/acdb/ats/sockets/common/api/
 
-AM_CPPFLAGS += @GLIB_CFLAGS@ -Dstrlcpy=g_strlcpy -include glib.h
 
 gateway_sources = ./transports/tcpip_gateway/src/tcpip_gateway_main.cpp \
                   ./transports/tcpip_gateway/src/tcpip_gateway_cmd_server.cpp \

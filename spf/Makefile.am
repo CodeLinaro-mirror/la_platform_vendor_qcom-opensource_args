@@ -28,6 +28,7 @@ spf_sources = ./api/apm/apm_api.h \
                 ./api/asps/asps_upd_usecase_api.h \
                 ./api/asps/asps_acd_usecase_api.h \
                 ./api/asps/asps_acm_api.h \
+                ./api/asps/asps_us_rendering_usecase_api.h \
                 ./api/modules/aac_decoder_api.h \
                 ./api/modules/aac_encoder_api.h \
                 ./api/modules/acd_api.h \
@@ -53,6 +54,9 @@ spf_sources = ./api/apm/apm_api.h \
                 ./api/modules/codec_dma_api.h \
                 ./api/modules/codec_metadata_api.h \
                 ./api/modules/common_enc_dec_api.h \
+                ./api/modules/asr_module_calibration_api.h \
+                ./api/modules/mma_api.h \
+                ./api/modules/us_tone_renderer_api.h \
                 ./api/modules/contexts_api.h \
                 ./api/modules/cop_packetizer_cmn_api.h \
                 ./api/modules/cop_packetizer_v0_api.h \
@@ -127,6 +131,12 @@ spf_sources = ./api/apm/apm_api.h \
                 ./api/modules/congestion_buf_api.h \
                 ./api/modules/jitter_buf_api.h \
                 ./api/vcpm/vcpm_api.h
+
+asps_sources =  ./api/asps/asps_ads_usecase_api.h \
+                ./api/asps/asps_upd_usecase_api.h \
+                ./api/asps/asps_acd_usecase_api.h \
+                ./api/asps/asps_acm_api.h \
+                ./api/asps/asps_us_rendering_usecase_api.h
 
 spf_includedir = $(includedir)/spf
 spf_include_HEADERS = $(spf_sources)

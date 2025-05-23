@@ -16,6 +16,11 @@ AC_PROG_CXX
 AC_PROG_LIBTOOL
 AM_PROG_AR
 
+AC_ARG_WITH(audio-headers,
+    AS_HELP_STRING([--with-audio-headers=DIR],
+            [Specify the location of the audio kernel headers]),
+    [CPPFLAGS="$CPPFLAGS -I $withval"])
+
 AC_ARG_WITH([qcom],
     AS_HELP_STRING([install qcom header files (default is no)]),
         [with_qcom=$withval],
@@ -31,6 +36,10 @@ AC_ARG_WITH([syslog],
 AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],
          [enable glib, Build against glib. Use this when building for HLOS systems which use glib]))
+
+AC_CHECK_FUNCS([strlcpy],[STRLCPY=yes],[STRLCPY=no])
+AC_CHECK_FUNCS([strlcat],[STRLCAT=yes],[STRLCAT=no])
+AM_CONDITIONAL([NO_STRLCPY_STRLCAT], [test "x$STRLCPY" = "xno" && test "x$STRLCAT" = "xno"])
 
 if (test "x${with_glib}" = "xyes"); then
         PKG_CHECK_MODULES(GTHREAD, gthread-2.0 >= 2.16, dummy=yes,
@@ -59,7 +68,7 @@ AC_ARG_WITH([ats_transport_tcp_ip],
 AM_CONDITIONAL([USES_ATS_TRANSPORT_TCPIP], [test "x${with_ats_transport_tcp_ip}" = "xyes"])
 
 AC_ARG_WITH([dummy_diag],
-      AC_HELP_STRING([--with-dummy_diag],
+      AC_HELP_STRING([--with-dummy-diag],
          [use dummy diag instead of libdiag]))
 
 if (test "x${with_dummy_diag}" = "xno"); then
@@ -88,6 +97,29 @@ fi
 
 AM_CONDITIONAL([LIBION_SUPPORTED], [test "x${with_libion}" = "xyes"])
 
+AC_ARG_WITH([msm_audio_ion_disable],
+    AS_HELP_STRING([MSM audio ion disable (default is yes)]),
+    [with_msm_audio_ion_disable=$withval],
+    [with_msm_audio_ion_disable=yes])
+AM_CONDITIONAL([ION_DRIVER_NOT_SUPPORTED], [test "x${with_msm_audio_ion_disable}" = "xyes"])
+
+AC_ARG_WITH([spf-restart],
+    AS_HELP_STRING([Support SPF restart feature(default is enable)]),
+    [with_spf_restart=$withval],
+    [with_spf_restart=enable])
+AM_CONDITIONAL([WITHOUT_SPF_RESTART], [test "x${with_spf_restart}" = "xdisable"])
+
+PKG_CHECK_MODULES([QMIF], [qmi-framework])
+AC_SUBST([QMIF_CFLAGS])
+AC_SUBST([QMIF_LIBS])
+
+PKG_CHECK_MODULES([PDMAPPER], [pdmapper])
+AC_SUBST([PDMAPPER_CFLAGS])
+AC_SUBST([PDMAPPER_LIBS])
+
+PKG_CHECK_MODULES([PDNOTIFIER], [pdnotifier])
+AC_SUBST([PDNOTIFIER_CFLAGS])
+AC_SUBST([PDNOTIFIER_LIBS])
 AC_CONFIG_FILES(
 Makefile
 spf/Makefile
