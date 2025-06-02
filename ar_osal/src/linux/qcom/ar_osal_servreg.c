@@ -45,6 +45,8 @@ char_t domain_name[AR_SUB_SYS_ID_LAST + 1][24] = { "msm/adsp/audio_pd", "msm/mds
 
 #define AR_OSAL_SERVREG_CLIENT_NAME "apps/ar_osal"
 
+static const char* pd_state_to_str(pd_state state);
+
 int32_t g_init_done = 0;
 struct ar_osal_service_node
 {
@@ -398,10 +400,7 @@ ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type
     }
     else {
         AR_LOG_INFO(AR_OSAL_SERVREG_TAG,
-            "Successfully registered.  Curr state is %s state (0x%08x)",
-            (state == EVENT_PD_UNKNOWN) ? "unknown" :
-            ((state == EVENT_PD_UP) ? "up" :
-            ((state == EVENT_PD_DOWN) ? "down" : "out of range")),
+            "Successfully registered.  Curr state is %s state (0x%08x)",pd_state_to_str(state),
             state);
         srv_reg_handle->srv_state = pd_state_to_ar_osal_pd_state(state);
     }
@@ -409,6 +408,16 @@ ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type
 end:
     return (ar_osal_servreg_t)srv_reg_handle;
 #endif
+}
+
+//Helper function to convert pd_state to string
+static const char* pd_state_to_str(pd_state state) {
+    switch ((pd_event)state) {
+        case EVENT_PD_UNKNOWN: return "unknown";
+        case EVENT_PD_UP: return "up";
+        case EVENT_PD_DOWN: return "down";
+        default: return "out of range";
+    }
 }
 
 /**

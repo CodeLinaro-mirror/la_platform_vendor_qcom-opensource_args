@@ -75,16 +75,13 @@ struct _acdb_proc_domain_module_list_t
 
 typedef struct _acdb_subgraph_proc_domain_module_map_t
 AcdbSubgraphPdmMap;
-#include "acdb_begin_pack.h"
 struct _acdb_subgraph_proc_domain_module_map_t
 {
 	uint32_t subgraph_id;
 	uint32_t proc_count;
 	uint32_t size;
-	AcdbProcDomainModuleList *proc_info;
-}
-#include "acdb_end_pack.h"
-;
+	AcdbProcDomainModuleList __attribute__((aligned(4))) *proc_info;
+};
 
 typedef struct _acdb_blob_module_info_t AcdbBlobModuleInfo;
 #include "acdb_begin_pack.h"

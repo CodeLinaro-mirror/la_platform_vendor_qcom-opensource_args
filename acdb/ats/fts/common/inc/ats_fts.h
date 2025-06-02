@@ -26,13 +26,10 @@
 #define FTS_MAX_FILE_COUNT 100
 
 typedef struct fts_file_table_t FtsFileTable;
-#include "acdb_begin_pack.h"
 struct fts_file_table_t {
-    ar_osal_mutex_t lock;
+    ar_osal_mutex_t __attribute__((aligned(4))) lock;
     ar_fhandle fhandle[FTS_MAX_FILE_COUNT];
-}
-#include "acdb_end_pack.h"
-;
+};
 
 /* ---------------------------------------------------------------------------
 * Public Functions
