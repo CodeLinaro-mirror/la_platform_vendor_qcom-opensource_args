@@ -1656,9 +1656,9 @@ struct ats_service_info_t
     /**< Service ID*/
     uint32_t service_id;
     /**< Major version*/
-    uint32_t major;
+    uint32_t __attribute__((aligned(4))) major;
     /**< Minor version*/
-    uint32_t minor;
+    uint32_t __attribute__((aligned(4))) minor;
 }
 #include "acdb_end_pack.h"
 ;
@@ -1983,7 +1983,7 @@ struct _ats_ocs_get_acdb_file_req_t
 typedef struct _ats_get_subgraph_cal_data_req_t AtsGetSubgraphCalDataReq;
 #include "acdb_begin_pack.h"
 struct _ats_get_subgraph_cal_data_req_t {
-    uint32_t subgraph_id;
+    uint32_t __attribute__((aligned(4))) subgraph_id;
     uint32_t module_iid;
     uint32_t param_id;
     AcdbGraphKeyVector cal_key_vector;
@@ -2131,7 +2131,7 @@ struct _ats_set_subgraph_cal_data_req_t {
 typedef struct _ats_get_subgraph_tag_data_req_t AtsGetSubgraphTagDataReq;
 #include "acdb_begin_pack.h"
 struct _ats_get_subgraph_tag_data_req_t {
-    uint32_t subgraph_id;
+    uint32_t __attribute__((aligned(4))) subgraph_id;
     uint32_t tag_id;
     uint32_t module_iid;
     uint32_t param_id;

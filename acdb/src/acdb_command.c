@@ -58,7 +58,6 @@ uint32_t glb_buf_3[GLB_BUF_3_LENGTH];
 * Type Declarations
 *--------------------------------------------------------------------------- */
 typedef struct _acdb_audio_cal_context_info_t AcdbAudioCalContextInfo;
-#include "acdb_begin_pack.h"
 struct _acdb_audio_cal_context_info_t {
     AcdbOp op;
     AcdbOp data_op;
@@ -101,13 +100,10 @@ struct _acdb_audio_cal_context_info_t {
     AcdbCkvLutEntryOffsets data_offsets;
     /**< A list of offloaded parameters from the global offloaded
     parameter property */
-    AcdbUintList offloaded_parameter_list;
-}
-#include "acdb_end_pack.h"
-;
+    AcdbUintList __attribute__((aligned(4))) offloaded_parameter_list;
+};
 
 typedef struct _acdb_tag_data_context_info_t AcdbTagDataContextInfo;
-#include "acdb_begin_pack.h"
 struct _acdb_tag_data_context_info_t {
     AcdbOp op;
     AcdbOp data_op;
@@ -123,13 +119,11 @@ struct _acdb_tag_data_context_info_t {
     SHARED) */
     AcdbDataPersistanceType param_type;
     /**< The DEF and DOT offsets */
-    AcdbDefDotPair data_offsets;
+    AcdbDefDotPair __attribute__((aligned(4))) data_offsets;
     /**< A list of offloaded parameters from the global offloaded
     parameter property */
-    AcdbUintList offloaded_parameter_list;
-}
-#include "acdb_end_pack.h"
-;
+    AcdbUintList __attribute__((aligned(4))) offloaded_parameter_list;
+};
 
 typedef struct _acdb_iid_ref_count_t AcdbIidRefCount;
 #include "acdb_begin_pack.h"
