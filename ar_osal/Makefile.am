@@ -20,8 +20,7 @@ AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-notifier/libpdnotifier
 AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-notifier/pd-notifier-idl
 AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-mapper/pd-mapper-idl
 
-AM_CFLAGS += -I$(srcdir)/api \
-             -I$(top_srcdir)/acdb/ats/transports/diag/linux/inc/
+AM_CFLAGS += -I$(srcdir)/api 
 
 osal_sources = ./api/ar_osal_error.h \
                ./api/ar_osal_dyn_pd.h \
