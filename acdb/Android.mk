@@ -15,6 +15,13 @@ acdb-def += -D_ANDROID_
 
 LOCAL_CFLAGS := $(acdb-def)
 
+# add for gcov dump
+ifeq ($(AUDIO_FEATURE_ENABLED_GCOV), true)
+LOCAL_CFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_CPPFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_LDFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+endif
+
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/api\
     $(LOCAL_PATH)/inc
 
@@ -65,6 +72,13 @@ ats-def += -D_ANDROID_ -DAR_ATS_USE_CUTILS
 #LOCAL_C_INCLUDES := $(MYLOCAL_PATH)/inc
 
 LOCAL_CFLAGS := $(ats-def)
+
+# add for gcov dump
+ifeq ($(AUDIO_FEATURE_ENABLED_GCOV), true)
+LOCAL_CFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_CPPFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_LDFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+endif
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_MCS)),true)
 	LOCAL_CFLAGS += -DMCS_ENABLED

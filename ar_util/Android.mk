@@ -20,6 +20,13 @@ LOCAL_HEADER_LIBRARIES := libspf-headers
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/api \
                     $(LOCAL_PATH)/inc
 
+# add for gcov dump
+ifeq ($(AUDIO_FEATURE_ENABLED_GCOV), true)
+LOCAL_CFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_CPPFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+LOCAL_LDFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
+endif
+
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/api
 
 include $(BUILD_SHARED_LIBRARY)
