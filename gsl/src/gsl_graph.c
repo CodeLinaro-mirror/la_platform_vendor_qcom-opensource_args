@@ -5,7 +5,8 @@
  *      Implement graph management layer for Graph Service Layer (GSL)
  *
  * \copyright
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -1208,7 +1209,8 @@ continue_cma:
 		}
 	}
 free_sg_proc_ids:
-	gsl_mem_free(rsp.sg_proc_ids);
+	if(!rsp.sg_proc_ids)
+		gsl_mem_free(rsp.sg_proc_ids);
 cleanup:
 	gsl_mem_free(cma_sg_info.subgraph_list);
 free_status_list:
@@ -2667,8 +2669,12 @@ static int32_t gsl_graph_close_single_gkv(struct gsl_graph *graph,
 		sg_obj_list.len = gkv_node->num_of_subgraphs;
 		sg_obj_list.sg_objs = gkv_node->sg_array;
 		sg = gsl_graph_get_sg_ptr(&sg_obj_list, pruned_sg_ids.sg_ids[i]);
+		if (!sg){
+			GSL_ERR("Failed to get sg_ptr for index %d", i);
+			continue;
+		}
 		for (int procid = 0; procid < sg->num_proc_ids; procid++) {
-			if (sg && sg->persist_cal_data_per_proc[procid].persist_cal_data.handle) {
+			if ( sg->persist_cal_data_per_proc[procid].persist_cal_data.handle) {
 				rc = gsl_allocate_gpr_packet(APM_CMD_DEREGISTER_CFG,
 					graph->src_port, APM_MODULE_INSTANCE_ID, sizeof(*cmd_header),
 					0, graph->proc_id, &send_pkt);
