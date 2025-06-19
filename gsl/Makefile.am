@@ -13,6 +13,10 @@ AM_CFLAGS += -I$(top_srcdir)/gpr/api
 AM_CFLAGS += -I$(top_srcdir)/acdb/api
 AM_CFLAGS += -I$(top_srcdir)/spf/api/ar_utils -I$(top_srcdir)/spf/api/apm -I$(top_srcdir)/spf/api/modules
 
+AM_CFLAGS += -DGSL_DEBUG_ENABLE
+AM_CFLAGS += -DGSL_LOG_PKT_ENABLE
+AM_CFLAGS += -DGSL_PKT_LOG_PATH=\"/data/vendor/audio/gsl_log.bin\"
+
 gsl_sources = ./inc/gsl_common.h \
               ./inc/gsl_graph.h \
               ./inc/gsl_main.h \

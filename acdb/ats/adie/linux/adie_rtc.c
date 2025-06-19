@@ -3,8 +3,9 @@
  *
  * This file has implementation of adie rtc for LX platform
  *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear 
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@ static struct chipset_id_info codec_chipset[] = {
     {"WCD939X", WCD939X},
     {"WCD938X", WCD938X},
     {"WCD937X", WCD937X},
+    {"WCD9378", WCD9378},
     {"WCD9360", WCD9360},
     {"AQT1000", AQT1000},
     {"WCD9341", WCD9341},
