@@ -130,15 +130,18 @@ spf_sources = ./api/apm/apm_api.h \
                 ./api/modules/jitter_buf_api.h \
                 ./api/vcpm/vcpm_api.h \
                 ./api/modules/asr_module_calibration_api.h \
+                ./api/modules/tts_module_calibration_api.h \
+                ./api/modules/nmt_module_calibration_api.h \
                 ./api/modules/us_tone_renderer_api.h \
                 ./api/modules/mma_api.h \
-                ./api/modules/media_fmt_api_basic.h \
-                ./api/modules/amdb_api.h
+                ./api/modules/sound_dose_api.h \
+                ./api/modules/sdz_api.h
 
 asps_sources =  ./api/asps/asps_ads_usecase_api.h \
                 ./api/asps/asps_upd_usecase_api.h \
                 ./api/asps/asps_acd_usecase_api.h \
                 ./api/asps/asps_acm_api.h \
+                ./api/asps/asps_sdz_usecase_api.h \
                 ./api/asps/asps_us_rendering_usecase_api.h
 
 spf_includedir = $(includedir)/spf
