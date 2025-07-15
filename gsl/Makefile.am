@@ -9,7 +9,7 @@ AM_CFLAGS += -I$(srcdir)/hw_rsc_api
 
 AM_CFLAGS += -I$(top_srcdir)/ar_osal/api
 AM_CFLAGS += -I$(top_srcdir)/ar_util/api
-AM_CFLAGS += -I$(top_srcdir)/gpr/api
+AM_CFLAGS += -I$(top_srcdir)/ar_gpr/api
 AM_CFLAGS += -I$(top_srcdir)/acdb/api
 AM_CFLAGS += -I$(top_srcdir)/spf/api/ar_utils -I$(top_srcdir)/spf/api/apm -I$(top_srcdir)/spf/api/modules
 
@@ -56,7 +56,7 @@ lib_include_HEADERS = $(gsl_sources)
 
 lib_LTLIBRARIES = libar-gsl.la
 libar_gsl_la_CC = @CC@
-libar_gsl_la_LIBADD = $(top_builddir)/acdb/libar-acdb.la $(top_builddir)/ar_osal/libar-osal.la $(top_builddir)/ar_util/libar-util.la $(top_builddir)/spf/libar-spfhdrs.la $(top_builddir)/gpr/libar-gpr.la
+libar_gsl_la_LIBADD = $(top_builddir)/acdb/libar-acdb.la $(top_builddir)/ar_osal/libar-osal.la $(top_builddir)/ar_util/libar-util.la $(top_builddir)/spf/libar-spfhdrs.la $(top_builddir)/ar_gpr/libar-gpr.la
 libar_gsl_la_SOURCES = $(gsl_c_sources)
 libar_gsl_la_CFLAGS = $(AM_CFLAGS)
 libar_gsl_la_LDFLAGS = -shared -avoid-version
