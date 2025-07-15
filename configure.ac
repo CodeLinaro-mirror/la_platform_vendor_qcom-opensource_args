@@ -127,14 +127,14 @@ ar_osal/Makefile
 ar_util/Makefile
 acdb/Makefile
 acdb/ats/Makefile
-gpr/Makefile
+ar_gpr/Makefile
 gsl/Makefile
 spf/spf.pc
 ar_osal/ar_osal.pc
 ar_util/ar_util.pc
 acdb/acdb.pc
 acdb/ats/ats.pc
-gpr/gpr.pc
+ar_gpr/ar_gpr.pc
 gsl/gsl.pc
 )
 

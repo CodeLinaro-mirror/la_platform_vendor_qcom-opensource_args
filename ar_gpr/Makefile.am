@@ -1,5 +1,5 @@
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = gpr.pc
+pkgconfig_DATA = ar_gpr.pc
 EXTRA_DIST = $(pkgconfig_DATA)
 
 AM_CFLAGS = -Wall
