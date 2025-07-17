@@ -794,10 +794,6 @@ static void gsl_graph_check_ckvs(struct gsl_key_vector *gkv, struct gsl_key_vect
 	pKv = (uint8_t*)rsp.key_vector_list;
 	for (i = 0; i < rsp.num_key_vectors; i++) {
 		kvs = (AcdbKeyVector *)pKv;
-		if (!kvs) {
-			GSL_ERR("kvs is null");
-			return;
-		}
 		GSL_VERBOSE("num_keys %d", kvs->num_keys);
 		for (j = 0; j < kvs->num_keys; j++) {
 			AcdbKeyValuePair kv = kvs->graph_key_vector[j];
