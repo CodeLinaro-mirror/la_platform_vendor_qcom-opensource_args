@@ -2,7 +2,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = spf.pc
 EXTRA_DIST = $(pkgconfig_DATA)
 
-AM_CFLAGS = -Wall -Werror
+AM_CFLAGS = -Wall -Werror -Wno-ignored-attributes
 AM_CFLAGS += -I ./api
 AM_CFLAGS += -I ./api/apm
 AM_CFLAGS += -I ./api/ar_utils
