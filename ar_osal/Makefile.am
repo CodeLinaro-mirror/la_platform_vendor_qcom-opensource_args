@@ -36,6 +36,9 @@ osal_c_sources = ./src/linux/ar_osal_file_io.c \
                  ./src/linux/ar_osal_timer.c \
                  ./src/linux/qcom/ar_osal_servreg.c
 
+if AR_OSAL_USE_MODEM_SSR
+AM_CFLAGS += -DAR_OSAL_USE_MODEM_SSR
+endif
 
 if AUDIO_DMA_SUPPORT
 osal_c_sources += ./src/linux/qcom/ar_osal_shmem_db.c

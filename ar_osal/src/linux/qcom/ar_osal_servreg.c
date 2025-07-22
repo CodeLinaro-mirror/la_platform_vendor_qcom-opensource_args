@@ -6,7 +6,7 @@
  *       state registration.
  *
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -36,6 +36,10 @@
 #include <service_registry_notifier_v01.h>
 SR_DL_Handle*       pd_mapper_handle;
 #else
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <sys/poll.h>
 #include "ar_osal_sys_id.h"
 char_t domain_name[AR_SUB_SYS_ID_LAST + 1][24] = { "msm/adsp/audio_pd", "msm/mdsp/audio_pd", "msm/adsp/audio_pd","msm/apss/audio_pd","msm/sdsp/audio_pd","msm/cdsp/audio_pd" };
 #endif /* AR_OSAL_USE_PD_NOTIFIER */
@@ -58,9 +62,19 @@ struct ar_osal_service_node
 #ifdef AR_OSAL_USE_PD_NOTIFIER
     PD_Notifier_Handle           *pd_handle;
 #endif /* AR_OSAL_USE_PD_NOTIFIER */
+#ifdef AR_OSAL_USE_MODEM_SSR
+    pthread_t monitor_thread;
+    int intPipe[2];
+    int fd;
+#endif
 };
 
 typedef struct ar_osal_service_node ar_osal_service_node;
+#ifdef AR_OSAL_USE_MODEM_SSR
+ar_osal_service_node modem_node;
+#define READY_TO_READ(p) ((p)->revents & (POLLIN|POLLPRI))
+#define ERROR_IN_FD(p) ((p)->revents & (POLLERR|POLLHUP|POLLNVAL))
+#endif
 ar_osal_servreg_t serv_reg_handle;
 
 #ifdef AR_OSAL_USE_PD_NOTIFIER
@@ -129,6 +143,183 @@ static void ar_osal_pd_notifier_cb(void *data, enum pd_event event)
 }
 #endif /* AR_OSAL_USE_PD_NOTIFIER */
 
+#ifdef AR_OSAL_USE_MODEM_SSR
+
+static void ar_osal_modem_notifier_cb(ar_osal_service_state_type state)
+{
+    ar_osal_servreg_state_notify_payload_type notify_state;
+
+    AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "ar_osal_modem_notifier_cb called");
+
+    notify_state.service_state = state;
+    strlcpy(notify_state.domain.name, domain_name[AR_MODEM_DSP], sizeof(notify_state.domain.name));
+    notify_state.domain.instance_id = 74;
+
+    if (modem_node.cb_func)
+    {
+        modem_node.cb_func((ar_osal_servreg_t)&modem_node,
+            AR_OSAL_SERVICE_STATE_NOTIFY,
+            modem_node.cb_context,
+            (void*)&notify_state,
+            sizeof(notify_state));
+    }
+}
+char* read_state(int fd)
+{
+    struct stat buf;
+    char *state = NULL;
+
+    if (fstat(fd, &buf) < 0)
+        return NULL;
+
+    off_t pos = lseek(fd, 0, SEEK_CUR);
+    off_t avail = buf.st_size - pos;
+    if (avail <= 0) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "avail %ld", avail);
+        return NULL;
+    }
+
+    state = (char *)calloc(avail+1, sizeof(char));
+    if (!state)
+        return NULL;
+
+    ssize_t bytes = read(fd, state, avail);
+    if (bytes <= 0)
+        return NULL;
+
+    // trim trailing whitespace
+    while (bytes && isspace(*(state+bytes-1))) {
+        *(state + bytes - 1) = '\0';
+        --bytes;
+    }
+    lseek(fd, 0, SEEK_SET);
+    return state;
+}
+int parse_snd_cards()
+{
+    int ret = AR_EOK;
+    char path[128] = {0};
+    int fd = -1;
+    char *state = NULL;
+    bool online;
+
+    snprintf(path, sizeof(path), "/sys/kernel/snd_card/card_state", 0);
+
+    if ((fd = open(path, O_RDONLY)) < 0) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "Open %s failed", path);
+        return AR_EUNSUPPORTED;
+    }
+
+    state = read_state(fd);
+    if (!state) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "Failed to read the state");
+        return AR_EUNSUPPORTED;
+    }
+    online = state && !strcmp(state, "1");
+    AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "initial state %s %d", state, online);
+
+    modem_node.fd = fd;
+    modem_node.srv_state = online ? AR_OSAL_SERVICE_STATE_UP : AR_OSAL_SERVICE_STATE_DOWN;
+
+    return ret;
+}
+void on_sndcard_state_update()
+{
+    char *rd_buf;
+
+    rd_buf = read_state(modem_node.fd);
+    if (!rd_buf) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "Error reading rd_buf");
+        return;
+    }
+
+    AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "new state %s", rd_buf);
+
+    if (strstr(rd_buf, "0"))
+        modem_node.srv_state = AR_OSAL_SERVICE_STATE_DOWN;
+    else if (strstr(rd_buf, "1"))
+        modem_node.srv_state = AR_OSAL_SERVICE_STATE_UP;
+    else {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "unknown state");
+        return;
+    }
+
+    AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "state %d", modem_node.srv_state);
+
+    return;
+}
+
+void monitor_node_state(void)
+{
+    int i = 1;
+    int errno_ = errno;
+    unsigned int num_poll_fds = 2/*pipe*/;
+    struct pollfd *pfd = (struct pollfd *)calloc(num_poll_fds, sizeof(struct pollfd));
+    if (!pfd) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "Calloc failed for poll fds");
+        return;
+    }
+
+    AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "Start monitor threadLoop.");
+
+    pfd[0].fd = modem_node.intPipe[0];
+    pfd[0].events = POLLPRI|POLLIN;
+    pfd[i].fd = modem_node.fd;
+    pfd[i].events = POLLPRI;
+
+    while (1) {
+        if (poll(pfd, num_poll_fds, -1) < 0) {
+            AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "poll() failed with err %s", strerror(errno_));
+            switch (errno_) {
+                case EINTR:
+                case ENOMEM:
+                    sleep(2);
+                    continue;
+                default:
+                    /* above errors can be caused due to current system
+                     * state .. any other error is not expected
+                     */
+                    AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "unxpected poll() system call failure");
+                    break;
+            }
+        }
+        AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "out of poll");
+
+        // check if requested to exit
+        if (READY_TO_READ(&pfd[0])) {
+            char buf[2]={0};
+            read(pfd[0].fd, buf, 1);
+            if (!strcmp(buf, "Q"))
+                break;
+        } else if (ERROR_IN_FD(&pfd[0])) {
+            /* do not consider for poll again
+             * POLLERR - can this happen?
+             * POLLHUP - adev must not close pipe
+             * POLLNVAL - fd is valid
+             */
+            AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "unxpected error in pipe poll fd 0x%x",
+                             pfd[0].revents);
+            pfd[0].fd *= -1;
+        }
+
+        if (READY_TO_READ(&pfd[1])) {
+            on_sndcard_state_update();
+            ar_osal_modem_notifier_cb(modem_node.srv_state);
+        } else if (ERROR_IN_FD(&pfd[1])) {
+            /* do not consider for poll again
+             * POLLERR - can this happen as we are reading from a fs?
+             * POLLHUP - not valid for cardN/state
+             * POLLNVAL - fd is valid
+             */
+            AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "unxpected error in card poll fd 0x%x",
+                             pfd[1].revents);
+            pfd[1].fd *= -1;
+        }
+    }
+    return;
+}
+
+#endif
 
 /**
 * \brief ar_osal_servreg_init
@@ -160,9 +351,30 @@ int32_t ar_osal_servreg_init(void)
         goto end;
     }
 #endif /* AR_OSAL_USE_PD_NOTIFIER */
+
+#ifdef AR_OSAL_USE_MODEM_SSR
+    if (pipe(modem_node.intPipe) < 0) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "failed to get pipe");
+        status = AR_EFAILED;
+        goto end;
+    }
+    if (parse_snd_cards()) {
+        AR_LOG_ERR(AR_OSAL_SERVREG_TAG, "Unable to parse sound cards");
+        status = AR_EFAILED;
+        goto parse_sndcards_error;
+    }
+    pthread_create(&modem_node.monitor_thread, NULL, monitor_node_state, NULL);
+    AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "snd card monitor init done.");
+    goto end;
+
+parse_sndcards_error:
+    close(modem_node.intPipe[0]);
+    close(modem_node.intPipe[1]);
+#endif
+
+end:
     // strlcpy(handle->client_name, AR_OSAL_SERVREG_TAG, sizeof(handle->client_name));
     AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "ar_osal_servreg_init success status(%d)", status);
-end:
     return status;
 }
 
@@ -193,6 +405,13 @@ int32_t ar_osal_servreg_deinit(void)
         pd_mapper_handle = NULL;
     }
 #endif /* AR_OSAL_USE_PD_NOTIFIER */
+
+#ifdef AR_OSAL_USE_MODEM_SSR
+    write(modem_node.intPipe[1], "Q", 1);
+    pthread_join(modem_node.monitor_thread, NULL);
+    close(modem_node.intPipe[0]);
+    close(modem_node.intPipe[1]);
+#endif
 end:
     return AR_EOK;
 }
@@ -339,9 +558,17 @@ ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type
     _In_ ar_osal_servreg_entry_type *domain,
     _In_ ar_osal_servreg_entry_type *service)
 {
-#ifndef AR_OSAL_USE_PD_NOTIFIER
-    return 1;
-#else
+#if  defined(AR_OSAL_USE_MODEM_SSR)
+    if (!strcmp(domain->name, "msm/mdsp/audio_pd")) {
+        AR_LOG_INFO(AR_OSAL_SERVREG_TAG, "Register modem SSR functions,\
+                        Domain name %s", domain->name);
+
+        modem_node.cb_func = cb_func;
+        modem_node.cb_context = cb_context;
+    }
+    return (&modem_node);
+
+#elif defined(AR_OSAL_USE_PD_NOTIFIER)
     int32_t status = AR_EOK;
     //ar_osal_servreg_t* handle = NULL;
     ar_osal_service_node* srv_reg_handle = NULL;
@@ -408,6 +635,8 @@ ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type
 
 end:
     return (ar_osal_servreg_t)srv_reg_handle;
+#else
+    return 1;
 #endif
 }
 
@@ -424,9 +653,7 @@ end:
 _IRQL_requires_max_(PASSIVE_LEVEL)
 int32_t ar_osal_servreg_deregister(_In_ ar_osal_servreg_t servreg_handle)
 {
-#ifndef AR_OSAL_USE_PD_NOTIFIER
-    return 1;
-#else
+#if defined(AR_OSAL_USE_PD_NOTIFIER)
     int32_t status = AR_EOK;
     enum pd_rcode pd_rc = PD_NOTIFIER_FAIL;
     ar_osal_service_node* srv_reg_handle = (ar_osal_service_node*)servreg_handle;
@@ -452,6 +679,12 @@ int32_t ar_osal_servreg_deregister(_In_ ar_osal_servreg_t servreg_handle)
     srv_reg_handle = NULL;
 end:
     return status;
+#elif defined(AR_OSAL_USE_MODEM_SSR)
+    modem_node.cb_func = NULL;
+    modem_node.cb_context = NULL;
+    return AR_EOK;
+#else
+    return 1;
 #endif
 }
 
