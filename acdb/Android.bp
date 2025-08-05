@@ -1,0 +1,183 @@
+cc_library_shared {
+
+    name: "libar-acdb",
+    owner: "qti",
+    vendor: true,
+
+    srcs: [
+        "src/acdb.c",
+        "src/acdb_command.c",
+        "src/acdb_delta_file_mgr.c",
+        "src/acdb_delta_parser.c",
+        "src/acdb_file_mgr.c",
+        "src/acdb_init.c",
+        "src/acdb_init_utility.c",
+        "src/acdb_parser.c",
+        "src/acdb_utility.c",
+        "src/acdb_data_proc.c",
+        "src/acdb_heap.c",
+        "src/acdb_context_mgr.c"
+        ],
+
+    shared_libs: [
+        "liblx-osal"
+        ],
+
+    include_dirs: [
+        "vendor/qcom/opensource/args/acdb/api",
+        "vendor/qcom/opensource/args/acdb/inc"
+        ],
+
+    export_include_dirs: [
+        "api",
+        "inc"
+        ],
+
+    cflags: [
+        "-D_ANDROID_"
+        ],
+
+    header_libs: [
+        "libcutils_headers",
+        "libutils_headers",
+        "vendor_common_inc",
+        "libarosal_headers",
+        "api"
+        ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
+}
+
+
+cc_library_shared {
+
+    name: "libats",
+    owner: "qti",
+    vendor: true,
+
+    srcs: [
+        "ats/src/ats.c",
+        "ats/src/ats_command.c",
+        "ats/rtc/common/src/ats_rtc.c",
+        "ats/online/common/src/ats_online.c",
+        "ats/mcs/common/src/ats_mcs.c",
+        "ats/mcs/linux/mcs.c",
+        "ats/fts/common/src/ats_fts.c",
+        "ats/transports/diag/linux/actp/src/actp.c",
+        "ats/transports/diag/linux/audtp/src/audtp.c",
+        "ats/adie/common/src/ats_adie_rtc.c",
+        "ats/adie/linux/adie_rtc.c",
+        "ats/sockets/linux/src/ar_sockets.cpp",
+        "ats/transports/common/src/ats_transport.c",
+        "ats/transports/tcpip_server/src/tcpip_cmd_server.cpp",
+        "ats/transports/tcpip_server/src/tcpip_rtm_server.cpp",
+        "ats/transports/tcpip_server/src/tcpip_socket_util.cpp"
+        ],
+
+    shared_libs: [
+        "liblx-osal",
+        "libutils",
+        "libcutils",
+        "libdiag",
+        "libar-gsl",
+        "libar-acdb"
+        ],
+
+    include_dirs: [
+        "vendor/qcom/opensource/args/acdb/ats/inc",
+        "vendor/qcom/opensource/args/acdb/ats/rtc/common/inc",
+        "vendor/qcom/opensource/args/acdb/ats/online/common/inc/",
+        "vendor/qcom/opensource/args/acdb/ats/mcs/common/inc/",
+        "vendor/qcom/opensource/args/acdb/ats/mcs/common/api/",
+        "vendor/qcom/opensource/args/acdb/ats/fts/common/inc/",
+        "vendor/qcom/opensource/args/acdb/ats/transports/diag/linux/actp/inc/",
+        "vendor/qcom/opensource/args/acdb/ats/transports/diag/linux/audtp/inc/",
+        "vendor/qcom/opensource/args/acdb/ats/adie/common/inc",
+        "vendor/qcom/opensource/args/acdb/ats/adie/common/api",
+        "vendor/qcom/opensource/args/acdb/ats/api",
+        "vendor/qcom/opensource/args/acdb/ats/sockets/common/api/",
+        "vendor/qcom/opensource/args/acdb/ats/transports/common/api/",
+        "vendor/qcom/opensource/args/acdb/ats/transports/tcpip_server/inc/",
+        "vendor/qcom/opensource/args/acdb/ats/transports/tcpip_server/api/",
+        ],
+
+    export_include_dirs: [
+        "ats/api",
+        "ats/inc",
+        "ats/adie/common/api",
+        "ats/mcs/common/api"
+        ],
+
+    cflags: [
+            "-D_ANDROID_",
+            "-DAR_ATS_USE_CUTILS",
+            ]
+        + select(soong_config_variable("qti", "AUDIO_FEATURE_ENABLED_MCS"), {
+            true: ["-DMCS_ENABLED"],
+            default: [],
+        }),
+
+    header_libs: [
+        "libcutils_headers",
+        "libutils_headers",
+        "libdiag_headers",
+        "vendor_common_inc"
+        ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
+}
+
+
+cc_binary {
+
+    name: "ats_gateway.out",
+    owner: "qti",
+    proprietary: true,
+    vendor: true,
+
+    host_ldlibs: ["-llog"],
+
+    srcs: [
+        "ats/transports/tcpip_gateway/src/tcpip_gateway_main.cpp",
+        "ats/transports/tcpip_gateway/src/tcpip_gateway_cmd_server.cpp",
+        "ats/sockets/linux/src/ar_sockets.cpp"
+        ],
+
+    shared_libs: [
+        "liblx-osal",
+        "libutils",
+        "libcutils"
+        ],
+
+    include_dirs: [
+        "vendor/qcom/opensource/args/acdb/ats/transports/tcpip_gateway/inc",
+        "vendor/qcom/opensource/args/acdb/ats/sockets/common/api/",
+        ],
+
+    cppflags: [
+        "-D_ANDROID",
+        "-DSOCK_PATH='\"/vendor/app/GatewayServer/ATS_sockets\"'",
+        "-DSOCK_PATH_SERVER='\"/vendor/app/GatewayServer/ATS_sockets/unix_sock.server\"'",
+        "-DSOCK_PATH_GATEWAY='\"/vendor/app/GatewayServer/ATS_sockets/unix_sock.gateway\"'"
+        ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
+}

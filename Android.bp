@@ -1,0 +1,4 @@
+subdirs = [] + select(soong_config_variable("qti", "AUDIO_USE_STUB_HAL"), {
+    true: [],
+    default:[ "*"],
+    })
