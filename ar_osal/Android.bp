@@ -2,4 +2,129 @@ cc_library_headers {
     name: "libarosal_headers",
     export_include_dirs: ["api"],
     vendor: true,
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
+}
+
+cc_library_headers {
+    name: "api",
+    export_include_dirs: ["api"],
+    vendor: true,
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
+}
+
+cc_library_headers {
+    name: "audio_kernel_headers",
+    export_include_dirs: ["api"],
+    vendor: true,
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
+}
+
+cc_library_shared {
+    name: "liblx-osal",
+    owner: "qti",
+    vendor: true,
+
+    cflags: [
+        "-D_ANDROID_",
+        "-DAR_OSAL_USE_CUTILS",
+        "-DPROPERTY_TRIGGER",
+    ] + select(soong_config_variable("qti", "TARGET_PD_SERVICE_ENABLED"), {
+        true: ["-DAR_OSAL_USE_PD_NOTIFIER"],
+        default: [],
+    }),
+
+    srcs: [
+        "src/linux/ar_osal_mutex.c",
+        "src/linux/ar_osal_thread.c",
+        "src/linux/ar_osal_signal.c",
+        "src/linux/ar_osal_log.c",
+        "src/linux/ar_osal_file_io.c",
+        "src/linux/ar_osal_sleep.c",
+        "src/linux/ar_osal_mem_op.c",
+        "src/linux/ar_osal_heap.c",
+        "src/linux/ar_osal_timer.c",
+        "src/linux/ar_osal_string.c",
+        "src/linux/qcom/ar_osal_log_pkt_op.c",
+        "src/linux/qcom/ar_osal_servreg.c",
+    ]  + select(soong_config_variable("qti", "TARGET_KERNEL_VERSION"), {
+            "4.14": ["src/linux/qcom/ar_osal_shmem.c"],
+            "4.19": ["src/linux/qcom/ar_osal_shmem.c"],
+            "5.4": ["src/linux/qcom/ar_osal_shmem.c"],
+            default: ["src/linux/qcom/ar_osal_shmem_db.c"],
+    }),
+
+    include_dirs: [
+        "vendor/qcom/opensource/audio-kernel/include",
+        "vendor/qcom/opensource/args/ar_osal/api/",
+        "system/memory/libion/include/ion",
+        "system/memory/libion/kernel-headers",
+        "vendor/qcom/proprietary/common",
+    ] + select(soong_config_variable("qti", "TARGET_PD_SERVICE_ENABLED"), {
+        true: [
+            //$(TARGET_OUT_HEADERS)
+            //$(TARGET_OUT_HEADERS)/libpdnotifier/inc
+            //$(TARGET_OUT_HEADERS)/qmi-framework/inc
+            //$(TARGET_OUT_HEADERS)/qmi/inc
+        ],
+        default: [],
+    }) + select(soong_config_variable("qti", "AUDIO_FEATURE_OLD_ION_IMPL"), {
+        true: [],
+        default: ["system/memory/libion/kernel-headers", "system/memory/libion/include/ion",],
+    }),
+
+    shared_libs: [
+        "liblog",
+        "libdiag",
+        "libcutils",
+    ] + select(soong_config_variable("qti", "AUDIO_FEATURE_OLD_ION_IMPL"), {
+        true: [],
+        default: ["libion"],
+    }) + select(soong_config_variable("qti", "TARGET_PD_SERVICE_ENABLED"), {
+        true: ["libpdmapper", "libpdnotifier"],
+        default: [],
+    }),
+
+    header_libs: [
+        "audio_kernel_headers",
+        "libarosal_headers",
+        "qti_audio_kernel_uapi",
+        "libdiag_headers",
+        "vendor_common_inc",
+    ] +select(soong_config_variable("qti", "TARGET_PD_SERVICE_ENABLED"), {
+        true: ["libpdmapper_headers", "libpdnotifier_headers", "libqmi_legacy_headers", "libqmi_common_headers"],
+        default: [],
+    }),
+
+    export_include_dirs: [
+        "api",
+        ],
+
+    apex_available: [
+        "//apex_available:platform",
+        "com.google.display_safety.har",
+        "com.google.display_safety.har.update",
+        "com.google.display_safety.har.stub",
+    ],
+    min_sdk_version: "34",
 }
