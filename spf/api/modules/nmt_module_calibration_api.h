@@ -1,6 +1,7 @@
 /* =========================================================================
   Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-  SPDX-License-Identifier: BSD-3-Clause-Clear
+  All rights reserved.
+  Confidential and Proprietary - Qualcomm Technologies, Inc.
   ========================================================================= */
 
 #ifndef NMT_MODULE_CALIBRATION_API_H
