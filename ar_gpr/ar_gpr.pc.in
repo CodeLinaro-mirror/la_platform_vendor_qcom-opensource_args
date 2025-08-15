@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: gpr
-Description: gpr library
+Name: ar_gpr
+Description: ar_gpr library
 Version: @VERSION@
 Libs: -L${libdir} -lar-gpr
 Cflags: -I${includedir}
