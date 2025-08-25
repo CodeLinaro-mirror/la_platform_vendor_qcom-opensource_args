@@ -5,9 +5,10 @@
  *      This file has implementation of file input/output related
  *      helper functions.
  *
- * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define AR_OSAL_FILE_IO_LOG_TAG    "COFI"
@@ -65,6 +66,14 @@ int32_t ar_fopen(_Out_ ar_fhandle *handle,
         break;
     case AR_FOPEN_READ_ONLY_WRITE:
         file_mode = "r+";
+        fileptr = fopen(path, "r");
+        if(fileptr){
+            fclose(fileptr);
+        }
+        else {
+            rc = AR_ENOTEXIST;
+            goto done;
+        }
         break;
     case AR_FOPEN_APPEND:
         file_mode = "a";
