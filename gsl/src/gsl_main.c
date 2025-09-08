@@ -1255,10 +1255,9 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 		goto cleanup;
 	}
 
+	GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
 	for (i = AR_SUB_SYS_ID_FIRST; i <= AR_SUB_SYS_ID_LAST; i++) {
-		GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
 		if (gsl_ctxt.spf_restart[i]) {
-			GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
 
 			// handle master proc restarting
 			gsl_shmem_remap_pre_alloc(i);
@@ -1271,7 +1270,6 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 				if (proc_domains[j].proc_type == DYNAMIC_PD)
 					supported_ss_mask &= ~(GSL_GET_SPF_SS_MASK(proc_domains[j].proc_id));
 			}
-			// open_close_lock will be acquired insides
 			rc = gsl_send_spf_satellite_info(i, supported_ss_mask,
 				GSL_MAIN_SRC_PORT, &gsl_ctxt.rsp_signal);
 			if (rc) {
@@ -1288,9 +1286,8 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 				}
 			}
 
-            /* retry for up to 3 seconds to help in cases
+			/* retry for up to 3 seconds to help in cases
 			    where ADSP RPC thread not ready */
-			GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
 			for (j = 0; j < GSL_DYN_DL_NUM_RETRIES_SSR; ++j) {
 				rc = gsl_do_load_bootup_dyn_modules(i, NULL);
 				if (rc) {
@@ -1301,8 +1298,8 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 				}
 			}
 		}
-		GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
 	}
+	GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
 
     /*
      * Initialize graph instance and register to GPR to
