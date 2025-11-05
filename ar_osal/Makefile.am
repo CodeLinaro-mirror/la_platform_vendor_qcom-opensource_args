@@ -50,7 +50,6 @@ osal_c_sources = ./src/linux/ar_osal_file_io.c \
                  ./src/linux/ar_osal_thread.c \
                  ./src/linux/ar_osal_timer.c \
                  ./src/linux/qcom/dyn_pd/ar_osal_dyn_pd.c \
-                 ./src/linux/qcom/dyn_pd/cdsp_dyn_pd_stub.c \
                  ./src/linux/qcom/ar_osal_servreg.c
 
 
@@ -73,6 +72,12 @@ AM_CFLAGS += -DAR_OSAL_USE_SYSLOG
 endif
 
 libar_osal_la_LIBADD = -lrt -lpthread @QMIF_LIBS@ @PDMAPPER_LIBS@ @PDNOTIFIER_LIBS@
+
+if TARGET_AUDIO_DYNAMIC_PD_ENABLED
+osal_c_sources += ./src/linux/qcom/dyn_pd/cdsp_dyn_pd_stub.c
+AM_CFLAGS += -DAR_OSAL_USE_DYNAMIC_PD
+libar_osal_la_LIBADD += -ladsprpc
+endif
 
 if CUTILS_SUPPORTED
 libar_osal_la_LIBADD += -lcutils
@@ -104,7 +109,7 @@ libar_osal_la_LIBADD += -lion
 libar_osal_la_CFLAGS += @LIBION_CFLAGS@
 endif
 
-libar_osal_la_LDFLAGS = -shared -avoid-version -ladsprpc
+libar_osal_la_LDFLAGS = -shared -avoid-version
 
 if !USE_DUMMY_DIAG
 AM_CFLAGS += @DIAG_CFLAGS@
