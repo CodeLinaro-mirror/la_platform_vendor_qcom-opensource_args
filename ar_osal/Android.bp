@@ -79,7 +79,6 @@ cc_library_shared {
         "vendor/qcom/opensource/args/ar_osal/api/",
         "system/memory/libion/include/ion",
         "system/memory/libion/kernel-headers",
-        "vendor/qcom/proprietary/common",
     ] + select(soong_config_variable("qti", "TARGET_PD_SERVICE_ENABLED"), {
         true: [
             //$(TARGET_OUT_HEADERS)
