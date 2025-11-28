@@ -17,6 +17,11 @@
 #include "apm_api.h"
 #include "ar_util_err_detection.h"
 #include "ar_osal_servreg.h"
+#ifdef PROPERTY_TRIGGER_ENABLE
+#include "rd_sh_mem_ep_api.h"
+#include "wr_sh_mem_ep_api.h"
+#include <cutils/properties.h>
+#endif
 
 uint32_t gsl_signal_create(struct gsl_signal *sig_p, ar_osal_mutex_t *lock)
 {
@@ -225,6 +230,18 @@ int32_t gsl_send_spf_cmd(gpr_packet_t **packet, struct gsl_signal *sig_p,
 		if (rc) {
 			rc = AR_ETIMEOUT;
 			spf_status = AR_ETIMEOUT;
+			#ifdef PROPERTY_TRIGGER_ENABLE
+			if ((APM_CMD_GRAPH_OPEN == opcode) || (APM_CMD_GRAPH_CLOSE == opcode)
+				|| (DATA_CMD_RD_SH_MEM_EP_DATA_BUFFER == opcode)
+				|| (DATA_CMD_RD_SH_MEM_EP_DATA_BUFFER_V2 == opcode)
+				|| (DATA_CMD_WR_SH_MEM_EP_DATA_BUFFER == opcode)
+				|| (DATA_CMD_WR_SH_MEM_EP_DATA_BUFFER_V2 == opcode)) {
+					GSL_ERR(" gsl_send_spf_cmd timeout 0x%x", opcode);
+					if (property_set("vendor.audio.crash.trigger", "1")) {
+						GSL_ERR("set property failed");
+					}
+            }
+			#endif
 		} else if (ev_flags & GSL_SIG_EVENT_MASK_CLOSE)
 			rc = AR_EABORTED;
 		else if (ev_flags & GSL_SIG_EVENT_MASK_SSR)
