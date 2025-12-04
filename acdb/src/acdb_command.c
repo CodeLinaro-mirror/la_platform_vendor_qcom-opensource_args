@@ -8,7 +8,7 @@
 *		ACDB public interface.
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *=============================================================================
@@ -770,7 +770,7 @@ int32_t TagDataGetParameterData(AcdbTagDataContextInfo *info, uint32_t *blob_off
         }
 
         status = IsOffloadedParam(module_header.parameter_id,
-            &info->offloaded_parameter_list);
+            (AcdbUintList*)((uint8_t*)&info->offloaded_parameter_list));
 
         is_offloaded_param = AR_SUCCEEDED(status) ? TRUE: FALSE;
 
@@ -989,7 +989,7 @@ int32_t TagDataGetSubgraphData(AcdbTagDataContextInfo *info,
         num_param_cal_found++;
 
         status = IsOffloadedParam(module_header.parameter_id,
-            &info->offloaded_parameter_list);
+            (AcdbUintList*)((uint8_t*)&info->offloaded_parameter_list));
 
         is_offloaded_param = AR_SUCCEEDED(status) ? TRUE : FALSE;
 
@@ -1165,7 +1165,7 @@ int32_t AcdbCmdGetModuleTagData(AcdbSgIdModuleTag *req, AcdbBlob *rsp, uint32_t 
     info.data_op = ACDB_OP_GET_SUBGRAPH_DATA;
     info.tag = &req->module_tag;
 
-    GetOffloadedParamList(&info.offloaded_parameter_list);
+    GetOffloadedParamList((AcdbUintList*)((uint8_t*)&info.offloaded_parameter_list));
     if (info.offloaded_parameter_list.count == 0)
     {
         ACDB_DBG("Error[%d]: No offloaded parameters found. Skipping..",
@@ -1194,7 +1194,7 @@ int32_t AcdbCmdGetModuleTagData(AcdbSgIdModuleTag *req, AcdbBlob *rsp, uint32_t 
         // Search Tag Data LUT
         status = TagDataSearchLut(&info.tag->tag_key_vector,
                                   offset_tag_data_tbl,
-                                  &info.data_offsets);
+                                  (AcdbDefDotPair*)((uint8_t*)&info.data_offsets));
         if (AR_FAILED(status))
         {
             ACDB_DBG("Warning[%d]: No matching TKV "
@@ -1237,7 +1237,7 @@ int32_t AcdbGetTagDataForSubgraph(AcdbTagDataContextInfo* info,
         return AR_EBADPARAM;
     }
 
-    GetOffloadedParamList(&info->offloaded_parameter_list);
+    GetOffloadedParamList((AcdbUintList*)((uint8_t*)&info->offloaded_parameter_list));
     if (info->offloaded_parameter_list.count == 0)
     {
         ACDB_DBG("Error[%d]: No offloaded parameters found. Skipping..",
@@ -1265,7 +1265,7 @@ int32_t AcdbGetTagDataForSubgraph(AcdbTagDataContextInfo* info,
 
     //Search Tag Data LUT
     status = TagDataSearchLut(&info->tag->tag_key_vector,
-        offset_tag_data_tbl, &info->data_offsets);
+        offset_tag_data_tbl, (AcdbDefDotPair*)((uint8_t*)&info->data_offsets));
     if (AR_FAILED(status) && status == AR_ENOTEXIST)
     {
         return status;
@@ -1780,7 +1780,7 @@ int32_t CalDataGetParameterData(AcdbAudioCalContextInfo *info, uint32_t *blob_of
         }
 
         status = IsOffloadedParam(module_header.parameter_id,
-            &info->offloaded_parameter_list);
+            (AcdbUintList*)((uint8_t*)&info->offloaded_parameter_list));
 
         is_offloaded_param = AR_SUCCEEDED(status) ? TRUE : FALSE;
 
@@ -2479,7 +2479,7 @@ int32_t AcdbGetVoiceParameterCalData(
         status = FileManGetFilePointer2((void**)&caldata.payload, file_offset);
 
         status = IsOffloadedParam(module_header.parameter_id,
-            &info->offloaded_parameter_list);
+            (AcdbUintList*)((uint8_t*)&info->offloaded_parameter_list));
 
         is_offloaded_param = AR_SUCCEEDED(status) ? TRUE : FALSE;
 
@@ -2709,7 +2709,7 @@ int32_t AcdbCmdGetCalData(AcdbGetCalDataReq* req, AcdbBlob* rsp)
         has_voice_data = TRUE;
     }
 
-    GetOffloadedParamList(&info.offloaded_parameter_list);
+    GetOffloadedParamList((AcdbUintList*)((uint8_t*)&info.offloaded_parameter_list));
     if (info.offloaded_parameter_list.count == 0)
     {
         if (info.op == ACDB_OP_GET_SIZE)
@@ -5358,7 +5358,7 @@ int32_t AcdbGetSubgraphCalibration(AcdbAudioCalContextInfo *info,
         num_param_cal_found++;
 
         status = IsOffloadedParam(module_header.parameter_id,
-            &info->offloaded_parameter_list);
+            (AcdbUintList*)((uint8_t*)&info->offloaded_parameter_list));
         is_offloaded_param = AR_SUCCEEDED(status) ? TRUE : FALSE;
 
         //Get data from Heap
@@ -6132,7 +6132,7 @@ int32_t AcdbCmdGetSubgraphCalDataNonPersist(AcdbSgIdCalKeyVector *req,
         return status;
     }
 
-    GetOffloadedParamList(&info.offloaded_parameter_list);
+    GetOffloadedParamList((AcdbUintList*)((uint8_t*)&info.offloaded_parameter_list));
     if (info.offloaded_parameter_list.count == 0)
     {
         ACDB_DBG("Error[%d]: No offloaded parameters found. Skipping..",
@@ -8373,7 +8373,7 @@ int32_t AcdbCmdGetSubgraphCalDataPersist(
         return status;
     }
 
-    (void)GetOffloadedParamList(&info.offloaded_parameter_list);
+    GetOffloadedParamList((AcdbUintList*)((uint8_t*)&info.offloaded_parameter_list));
     if (info.offloaded_parameter_list.count == 0)
     {
         ACDB_DBG("Error[%d]: No offloaded parameters found. Skipping..",
@@ -8596,7 +8596,7 @@ int32_t AcdbCmdGetProcSubgraphCalDataPersist(
         return status;
     }
 
-    (void)GetOffloadedParamList(&info.offloaded_parameter_list);
+    GetOffloadedParamList((AcdbUintList*)((uint8_t*)&info.offloaded_parameter_list));
     if (info.offloaded_parameter_list.count == 0)
     {
         ACDB_DBG("Warning[%d]: No offloaded parameters found. Skipping..",

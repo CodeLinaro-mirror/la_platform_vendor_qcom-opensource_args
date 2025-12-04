@@ -8,7 +8,7 @@
 *     Tuning Service to handle request buffer and operate ACDB
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *==============================================================================
@@ -722,14 +722,16 @@ int32_t ats_get_service_info(AtsCmdGetServiceInfoRsp *svc_info_rsp, uint32_t rsp
         case ATS_MCS_SERVICE_ID:
         {
             ats_mcs_get_version(
-                &svc_info.major, &svc_info.minor);
+                (uint32_t*)((uint8_t*)&svc_info.major),
+                (uint32_t*)((uint8_t*)&svc_info.minor));
             found = TRUE;
             break;
         }
         case ATS_CODEC_RTC_SERVICE_ID:
         {
             ats_adie_rtc_get_version(
-                &svc_info.major, &svc_info.minor);
+                (uint32_t*)((uint8_t*)&svc_info.major),
+                (uint32_t*)((uint8_t*)&svc_info.minor));
             found = TRUE;
             break;
         }

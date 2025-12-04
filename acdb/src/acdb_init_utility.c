@@ -3,11 +3,11 @@
 * \file acdb_init_utility.c
 *
 * \brief
-*		Contains utility fucntions for ACDB SW initialiation. This inclues
-*		initializaing the ACDB Data and ACDB Delta Data files.
+*  Contains utility fucntions for ACDB SW initialiation. This inclues
+*  initializaing the ACDB Data and ACDB Delta Data files.
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *=============================================================================
@@ -35,7 +35,7 @@ int32_t AcbdInitLoadInMemFile(const char_t* fname, ar_fhandle fhandle, acdb_buff
         return AR_EBADPARAM;
     }
 
-    int32_t status = ar_fmap(fhandle, &in_mem_file->buffer);
+    int32_t status = ar_fmap(fhandle, (const void **)&in_mem_file->buffer);
     if (AR_EUNSUPPORTED == status)
     {
         in_mem_file->buffer = (void*)ACDB_MALLOC(uint8_t, in_mem_file->size);
