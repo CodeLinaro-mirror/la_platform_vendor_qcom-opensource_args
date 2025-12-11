@@ -6,7 +6,7 @@
 *      Processes data for the ACDB SW commands.
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *=============================================================================
@@ -181,7 +181,7 @@ int32_t DataProcGetSubgraphProcIidMap(uint32_t subgraph_id, AcdbSubgraphPdmMap* 
             continue;
         }
 
-        status = FileManGetFilePointer2((void**)&subgraph_proc_iid_map->proc_info, offset);
+        status = FileManGetFilePointer2((void**)((char*)&subgraph_proc_iid_map->proc_info), offset);
         if (AR_FAILED(status))
         {
             ACDB_ERR("Error[%d]: Unable to get pointer to proc domain module list info", status);
@@ -2204,7 +2204,7 @@ int32_t DataProcGetSubgraphPdmMap(AcdbSubgraphPdmMap* map)
             map->size = found_map.size;
             if (found_map.size <= 0) continue;
 
-            status = FileManGetFilePointer1((void **)&map->proc_info, found_map.size, &offset);
+            status = FileManGetFilePointer1((void **)((char*)&map->proc_info), found_map.size, &offset);
             if (AR_FAILED(status))
             {
                 ACDB_ERR("Error[%d]: Failed to read processor info", status);
