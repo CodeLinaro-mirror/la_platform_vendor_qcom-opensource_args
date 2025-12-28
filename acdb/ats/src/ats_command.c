@@ -8,7 +8,7 @@
 *     requests from ATS clients and retrieves the response from ACDB.
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *==============================================================================
@@ -133,7 +133,7 @@ int32_t AtsCmdGetCalDataNonPersist(
     }
 
     subgraph_list.count = 1;
-    subgraph_list.list = &req->subgraph_id;
+    subgraph_list.list = (uint32_t*)((uint8_t*)&req->subgraph_id);
 
     status = acdb_ctx_man_ioctl(
         ACDB_CTX_MAN_CMD_SET_CONTEXT_HANDLE_USING_SUBGRAPHS,
@@ -237,7 +237,7 @@ int32_t AtsCmdGetCalDataPersist(
     }
 
     subgraph_list.count = 1;
-    subgraph_list.list = &req->subgraph_id;
+    subgraph_list.list = (uint32_t*)((uint8_t*)&req->subgraph_id);
 
     status = acdb_ctx_man_ioctl(
         ACDB_CTX_MAN_CMD_SET_CONTEXT_HANDLE_USING_SUBGRAPHS,
@@ -344,7 +344,7 @@ int32_t AtsCmdGetTagData(
     }
 
     subgraph_list.count = 1;
-    subgraph_list.list = &req->subgraph_id;
+    subgraph_list.list = (uint32_t*)((uint8_t*)&req->subgraph_id);
 
     status = acdb_ctx_man_ioctl(
         ACDB_CTX_MAN_CMD_SET_CONTEXT_HANDLE_USING_SUBGRAPHS,
