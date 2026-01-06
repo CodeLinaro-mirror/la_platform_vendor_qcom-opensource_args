@@ -5,7 +5,7 @@
  *      Main entry point for Graph Service Layer (GSL)
  *
  * \copyright
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include "gsl_intf.h"
@@ -903,6 +903,8 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 		GSL_ERR("acdb_init failed %d", rc);
 		goto deinit_gpr;
 	}
+
+	gsl_spf_timeouts_init();
 
 	rc = gsl_sg_pool_init();
 	if (rc) {
