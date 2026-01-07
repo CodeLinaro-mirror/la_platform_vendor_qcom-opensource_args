@@ -6,7 +6,7 @@
  *       state registration.
  *
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -399,9 +399,9 @@ ar_osal_servreg_t ar_osal_servreg_register(_In_ ar_osal_client_type  client_type
     else {
         AR_LOG_INFO(AR_OSAL_SERVREG_TAG,
             "Successfully registered.  Curr state is %s state (0x%08x)",
-            (state == EVENT_PD_UNKNOWN) ? "unknown" :
-            ((state == EVENT_PD_UP) ? "up" :
-            ((state == EVENT_PD_DOWN) ? "down" : "out of range")),
+            ((pd_event)state == EVENT_PD_UNKNOWN) ? "unknown" :
+            (((pd_event)state == EVENT_PD_UP) ? "up" :
+            (((pd_event)state == EVENT_PD_DOWN) ? "down" : "out of range")),
             state);
         srv_reg_handle->srv_state = pd_state_to_ar_osal_pd_state(state);
     }

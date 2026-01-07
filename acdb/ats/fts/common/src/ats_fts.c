@@ -8,7 +8,7 @@
 *     definitions necessary for ATS to handle requests that operate ACDB SW
 *
 * \copyright
-*  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 *  SPDX-License-Identifier: BSD-3-Clause-Clear
 *
 *==============================================================================
@@ -280,7 +280,7 @@ int32_t ats_fts_init(void)
 
     ACDB_CLEAR_BUFFER(fts_file_table->fhandle);
 
-    status = ar_osal_mutex_create(&fts_file_table->lock);
+    status = ar_osal_mutex_create((ar_osal_mutex_t *)((uint8_t*)&fts_file_table->lock));
     if (AR_FAILED(status))
     {
         ATS_ERR("Error[%d]: Failed to create lock.", status);
