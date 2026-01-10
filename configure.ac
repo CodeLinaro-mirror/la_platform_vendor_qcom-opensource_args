@@ -109,6 +109,12 @@ AC_ARG_WITH([spf-restart],
     [with_spf_restart=enable])
 AM_CONDITIONAL([WITHOUT_SPF_RESTART], [test "x${with_spf_restart}" = "xdisable"])
 
+AC_ARG_WITH([audio-dynamic-pd],
+    AS_HELP_STRING([Enable Audio Dynamic PD support(default is disable)]),
+    [with_audio_dynamic_pd=$withval],
+    [with_audio_dynamic_pd=disable])
+AM_CONDITIONAL([TARGET_AUDIO_DYNAMIC_PD_ENABLED], [test "x${with_audio_dynamic_pd}" = "xenable"])
+
 PKG_CHECK_MODULES([QMIF], [qmi-framework])
 AC_SUBST([QMIF_CFLAGS])
 AC_SUBST([QMIF_LIBS])
