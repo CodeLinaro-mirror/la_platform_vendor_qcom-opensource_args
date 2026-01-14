@@ -39,6 +39,9 @@
 #include "apm_graph_properties.h"
 #include <string.h>
 #include <stdio.h>
+#ifdef PROPERTY_TRIGGER_ENABLE
+#include <cutils/properties.h>
+#endif
 
 #if defined(GSL_LOG_PKT_ENABLE) || defined(GSL_LOG_DATA_ENABLE)
 ar_fhandle pkt_log_fd = NULL;
@@ -746,6 +749,15 @@ static int32_t gsl_do_spf_readiness_check(
 		GSL_DBG("Wait for Spf readiness rsp");
 		rc = gsl_signal_timedwait(&gsl_ctxt.rsp_signal,
 			ready_check_interval_ms, &event_flags, &spf_status, NULL);
+		#ifdef PROPERTY_TRIGGER_ENABLE
+		if (rc == AR_EFAILED) {
+			GSL_ERR("GPR async fail %d", rc);
+			if (property_set("vendor.audio.crash.trigger", "1")) {
+				GSL_ERR("set property failed");
+			}
+			goto exit;
+		}
+		#endif
 		if (rc == AR_ETIMEOUT) {
 			/* timed out continue polling */
 			rc = AR_ENOTREADY;

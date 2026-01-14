@@ -54,6 +54,11 @@ LOCAL_CFLAGS += -Wno-unused-local-typedef
 LOCAL_CFLAGS += -Wno-unused-parameter
 LOCAL_CFLAGS += -Wno-unused-variable
 
+ifeq ($(PROPERTY_TRIGGER_ENABLE), true)
+LOCAL_SHARED_LIBRARIES += libcutils
+LOCAL_CFLAGS += -DPROPERTY_TRIGGER_ENABLE
+endif
+
 # add for gcov dump
 ifeq ($(AUDIO_FEATURE_ENABLED_GCOV), true)
 LOCAL_CFLAGS += -g --coverage -fprofile-arcs -ftest-coverage
