@@ -5,7 +5,7 @@
  *      Manages shared memory allocations across all graphs in the system
  *
  * \copyright
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <stdint.h>
@@ -1686,8 +1686,12 @@ int32_t gsl_shmem_init(uint32_t num_master_procs, uint32_t *master_procs)
 		GSL_ERR("Registering shmem src port failed");
 		return rc;
 	}
-
+	/* TODO: This ar_shmem_init() API call will be removed in a future update. */
 	rc = ar_shmem_init();
+	if (rc)
+		goto deregister;
+
+	rc = ar_shmem_init_v2(num_master_procs, master_procs);
 	if (rc)
 		goto deregister;
 

@@ -6,7 +6,7 @@
  *      This file has implementation for Virtual Address based shared memory allocation for DSP.
 
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -66,6 +66,29 @@ end:
  */
 _IRQL_requires_max_(PASSIVE_LEVEL)
 int32_t ar_shmem_init(void)
+{
+    PAGED_FUNCTION();
+    return AR_EOK;
+}
+
+/**
+ * \brief Initialize the shared memory interface using a list of processor domains (V2 API).
+ *
+ * This V2 API selects the appropriate shared memory implementation
+ * based on the provided list of processor domain IDs.
+ *
+ * Passing num_master_procs = 0 results in behavior equivalent to the
+ * V1 API (ar_shmem_init), allowing a smooth transition from V1 to V2.
+ *
+ * \param[in] num_master_procs   Number of processor domain IDs.
+ * \param[in] master_procs       Pointer to an array of processor domain IDs.
+ *
+ * \return
+ *  0        -- Success
+ *  Nonzero  -- Failure
+ */
+_IRQL_requires_max_(PASSIVE_LEVEL)
+int32_t ar_shmem_init_v2(uint32_t num_master_procs, uint32_t *master_procs)
 {
     PAGED_FUNCTION();
     return AR_EOK;
