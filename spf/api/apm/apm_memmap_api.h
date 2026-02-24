@@ -4,14 +4,9 @@
  *  	 This file contains the structure definitions for the memory map commands
  *
  * \copyright
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-// clang-format off
-/*
-$Header: //components/rel/avs.fwk/1.0/api/apm/apm_memmap_api.h#9 $
-*/
-// clang-format on
 
 #ifndef _APM_MEMMAP_API_H_
 #define _APM_MEMMAP_API_H_
