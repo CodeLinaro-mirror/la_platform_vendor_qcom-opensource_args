@@ -92,6 +92,32 @@ AC_ARG_WITH([modem_ssr_support],
     [with_modem_ssr_support=no])
 AM_CONDITIONAL([AR_OSAL_USE_MODEM_SSR], [test "x${with_modem_ssr_support}" = "xyes"])
 
+AC_ARG_WITH([adsp_ssr_support],
+    AS_HELP_STRING([use adsp_ssr_support (default is no)]),
+    [with_adsp_ssr_support=$withval],
+    [with_adsp_ssr_support=no])
+AM_CONDITIONAL([AR_OSAL_USE_ADSP_SSR], [test "x${with_adsp_ssr_support}" = "xyes"])
+
+AC_ARG_WITH([spf-restart],
+    AS_HELP_STRING([Support SPF restart feature(default is enable)]),
+    [with_spf_restart=$withval],
+    [with_spf_restart=enable])
+AM_CONDITIONAL([WITHOUT_SPF_RESTART], [test "x${with_spf_restart}" = "xdisable"])
+
+if test "x${with_adsp_ssr_support}" = "xyes"; then
+    PKG_CHECK_MODULES([QMIF], [qmi-framework])
+    AC_SUBST([QMIF_CFLAGS])
+    AC_SUBST([QMIF_LIBS])
+
+    PKG_CHECK_MODULES([PDMAPPER], [pdmapper])
+    AC_SUBST([PDMAPPER_CFLAGS])
+    AC_SUBST([PDMAPPER_LIBS])
+
+    PKG_CHECK_MODULES([PDNOTIFIER], [pdnotifier])
+    AC_SUBST([PDNOTIFIER_CFLAGS])
+    AC_SUBST([PDNOTIFIER_LIBS])
+fi
+
 AM_CONDITIONAL([LIBION_SUPPORTED], [test "x${with_libion}" = "xyes"])
 
 AC_CONFIG_FILES(

@@ -4,9 +4,25 @@ EXTRA_DIST = $(pkgconfig_DATA)
 
 AM_CFLAGS = -Wall -Wno-pointer-to-int-cast -Wno-error=unused-function \
             -Wno-error=unused-label -DLINUX_ENABLED
+if AR_OSAL_USE_ADSP_SSR
+AM_CFLAGS += @QMIF_CFLAGS@ \
+             @PDMAPPER_CFLAGS@ \
+             @PDNOTIFIER_CFLAGS@ \
+             -DAR_OSAL_USE_PD_NOTIFIER
+endif
+
+if WITHOUT_SPF_RESTART
+AM_CFLAGS += -DAR_OSAL_SPF_RESTART_DISABLED
+endif
 
 AM_CFLAGS += -I$(srcdir)/api \
              -I$(top_srcdir)/acdb/ats/transports/diag/linux/inc/
+if AR_OSAL_USE_ADSP_SSR
+AM_CFLAGS += -I ${WORKSPACE}/ss-services/pd-mapper/libpdmapper \
+             -I ${WORKSPACE}/ss-services/pd-notifier/libpdnotifier \
+             -I ${WORKSPACE}/ss-services/pd-notifier/pd-notifier-idl \
+             -I ${WORKSPACE}/ss-services/pd-mapper/pd-mapper-idl
+endif
 
 osal_sources = ./api/ar_osal_error.h \
                ./api/ar_osal_file_io.h \
@@ -22,7 +38,8 @@ osal_sources = ./api/ar_osal_error.h \
                ./api/ar_osal_sys_id.h \
                ./api/ar_osal_thread.h \
                ./api/ar_osal_timer.h \
-               ./api/ar_osal_types.h
+               ./api/ar_osal_types.h \
+               ./api/ar_osal_log_pkt_op.h
 
 osal_c_sources = ./src/linux/ar_osal_file_io.c \
                  ./src/linux/ar_osal_heap.c \
@@ -59,6 +76,10 @@ AM_CFLAGS += -DAR_OSAL_USE_SYSLOG
 endif
 
 libar_osal_la_LIBADD = -lrt -lpthread
+
+if AR_OSAL_USE_ADSP_SSR
+libar_osal_la_LIBADD += @QMIF_LIBS@ @PDMAPPER_LIBS@ @PDNOTIFIER_LIBS@
+endif
 
 if CUTILS_SUPPORTED
 libar_osal_la_LIBADD += -lcutils
