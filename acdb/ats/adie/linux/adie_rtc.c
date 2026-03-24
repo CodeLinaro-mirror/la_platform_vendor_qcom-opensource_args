@@ -3,8 +3,8 @@
  *
  * This file has implementation of adie rtc for LX platform
  *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear 
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -303,7 +303,7 @@ static int get_reg_path(char **match_strings, int array_size)
     int i;
     int ret = -EINVAL;
     struct dirent *dirent;
-    char path[FILE_NAME_LENGTH] = "/sys/kernel/debug";
+    char path[FILE_NAME_LENGTH] = "";
 
     if(*match_strings == NULL){
         ret = -EINVAL;
