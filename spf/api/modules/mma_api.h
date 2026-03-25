@@ -6,7 +6,7 @@
   @brief This file contains Public APIs for MMA module.
 
 \copyright
-Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 SPDX-License-Identifier: BSD-3-Clause-Clear
 ===============================================================================*/
 
@@ -97,7 +97,7 @@ when       who      what, where, why
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_static_cfg_t {
+struct param_id_mma_static_cfg_t {
 
     int32_t num_channel_processing;
     /**< @h2xmle_description   {Number of channel processing}
@@ -125,10 +125,11 @@ typedef struct param_id_mma_static_cfg_t {
          @h2xmle_visibility  {hide}
          @h2xmle_readOnly    {true} */
 
-}param_id_mma_static_cfg_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
+typedef struct param_id_mma_static_cfg_t param_id_mma_static_cfg_t;
 
 
 #define PARAM_ID_MMA_MODE_BIT_CONFIG 0x08001AC5
@@ -139,7 +140,7 @@ typedef struct param_id_mma_static_cfg_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_mode_bit_config_t {
+struct param_id_mma_mode_bit_config_t {
 
 
     uint32_t mode_bit;
@@ -198,10 +199,11 @@ typedef struct param_id_mma_mode_bit_config_t {
 
     */
 
-}param_id_mma_mode_bit_config_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
+typedef struct param_id_mma_mode_bit_config_t param_id_mma_mode_bit_config_t;
 
 
 #define PARAM_ID_MMA_CONTEXT_ML_MODEL_CONFIG 0x08001AC6
@@ -218,7 +220,7 @@ typedef struct param_id_mma_mode_bit_config_t {
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
 
-typedef struct param_id_mma_context_ml_model_config_t
+struct param_id_mma_context_ml_model_config_t
 {
     uint32_t model_align;
     /**< @h2xmle_description {Data Alignment required for the model_data}
@@ -251,18 +253,18 @@ typedef struct param_id_mma_context_ml_model_config_t
          @h2xmle_group       {MODEL}
          @h2xmle_policy      {Basic} */
 
-}param_id_mma_context_ml_model_config_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_context_ml_model_config_t param_id_mma_context_ml_model_config_t;
 
 
  /** @h2xmlp_subStruct */
 /* Unique Paramter id */
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct capi_mma_context_threshold_struct_t {
+struct capi_mma_context_threshold_struct_t {
 
     uint32_t context_id;
     /**< @h2xmle_description   {context ID for which threshold being set}
@@ -277,10 +279,11 @@ typedef struct capi_mma_context_threshold_struct_t {
          @h2xmle_group         {GLOBAL}
          @h2xmle_policy        {Advanced} */
 
-} capi_mma_context_threshold_struct_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
+typedef struct capi_mma_context_threshold_struct_t capi_mma_context_threshold_struct_t;
 
 #define PARAM_ID_MMA_CONTEXT_THRESHOLD 0x08001AC7
 
@@ -291,7 +294,7 @@ typedef struct capi_mma_context_threshold_struct_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_context_threshold_t {
+struct param_id_mma_context_threshold_t {
 
     uint32_t num_contexts;
     /**< @h2xmle_description   {Number of contexts being set}
@@ -308,11 +311,11 @@ typedef struct param_id_mma_context_threshold_t {
          @h2xmle_policy      {Advanced}
          @h2xmle_rawData */
 #endif
-}param_id_mma_context_threshold_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_context_threshold_t param_id_mma_context_threshold_t;
 
 #define PARAM_ID_MMA_SPEECH_DYNAMIC_CONFIG 0x08001AC8
 
@@ -322,7 +325,7 @@ typedef struct param_id_mma_context_threshold_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_speech_dynamic_config_t {
+struct param_id_mma_speech_dynamic_config_t {
 
     uint32_t len_hangover_speech;
     /**< @h2xmle_description   {Number of blocks of no detected speech before vad classification goes to 0}
@@ -345,11 +348,11 @@ typedef struct param_id_mma_speech_dynamic_config_t {
          @h2xmle_group         {GLOBAL}
          @h2xmle_policy        {Advanced} */
 
-}param_id_mma_speech_dynamic_config_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_speech_dynamic_config_t param_id_mma_speech_dynamic_config_t;
 
 
 #define PARAM_ID_MMA_CONTINUOUS_LISTEN_ENABLE_CONFIG 0x08001AC9
@@ -360,7 +363,7 @@ typedef struct param_id_mma_speech_dynamic_config_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_continuous_listen_enable_config_t {
+struct param_id_mma_continuous_listen_enable_config_t {
 
     int32_t continuous_listen_enable;
     /**< @h2xmle_description {Continuous listening mode enable}
@@ -368,11 +371,11 @@ typedef struct param_id_mma_continuous_listen_enable_config_t {
     @h2xmle_range       {0..1}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_continuous_listen_enable_config_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_continuous_listen_enable_config_t param_id_mma_continuous_listen_enable_config_t;
 
 #define PARAM_ID_MMA_CONTINUOUS_LISTEN_TIMEOUT_CONFIG 0x08001ACA
 
@@ -382,7 +385,7 @@ typedef struct param_id_mma_continuous_listen_enable_config_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_continuous_listen_timeout_config_t {
+struct param_id_mma_continuous_listen_timeout_config_t {
 
     int32_t continuous_listen_timeout_in_ms;
     /**< @h2xmle_description {Continuous listen timeout in ms }
@@ -390,10 +393,11 @@ typedef struct param_id_mma_continuous_listen_timeout_config_t {
     @h2xmle_range       {1..15000}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_continuous_listen_timeout_config_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
+typedef struct param_id_mma_continuous_listen_timeout_config_t param_id_mma_continuous_listen_timeout_config_t;
 
 #define PARAM_ID_MMA_DETECTION_TIMEOUT_CONFIG 0x08001ACB
 
@@ -403,7 +407,7 @@ typedef struct param_id_mma_continuous_listen_timeout_config_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_detection_timeout_config_t {
+struct param_id_mma_detection_timeout_config_t {
 
     int32_t detection_timeout_in_ms;
     /**< @h2xmle_description {detection listen timeout in ms}
@@ -411,11 +415,11 @@ typedef struct param_id_mma_detection_timeout_config_t {
     @h2xmle_range       {1..15000}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_detection_timeout_config_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_detection_timeout_config_t param_id_mma_detection_timeout_config_t;
 
 #define PARAM_ID_MMA_ENABLE_SPEECH_RESET 0x08001ACC
 
@@ -425,7 +429,7 @@ typedef struct param_id_mma_detection_timeout_config_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_enable_speech_reset_t {
+struct param_id_mma_enable_speech_reset_t {
 
     int32_t enable_reset;
     /**< @h2xmle_description {flag to enable speech reset}
@@ -433,10 +437,11 @@ typedef struct param_id_mma_enable_speech_reset_t {
     @h2xmle_range       {0..1}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_enable_speech_reset_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
+typedef struct param_id_mma_enable_speech_reset_t param_id_mma_enable_speech_reset_t;
 
 #define PARAM_ID_MMA_SPEECH_RESET_PERIOD 0x08001ACD
 
@@ -446,7 +451,7 @@ typedef struct param_id_mma_enable_speech_reset_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_speech_reset_period_t {
+struct param_id_mma_speech_reset_period_t {
 
     int32_t speech_reset_period_in_ms;
     /**< @h2xmle_description {reset period in microseconds}
@@ -454,11 +459,11 @@ typedef struct param_id_mma_speech_reset_period_t {
     @h2xmle_range       {0..9000}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_speech_reset_period_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_speech_reset_period_t param_id_mma_speech_reset_period_t;
 
 #define PARAM_ID_MMA_ILD_CONFIG 0x08001ACE
 
@@ -468,7 +473,7 @@ typedef struct param_id_mma_speech_reset_period_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_ild_config_param_t {
+struct param_id_mma_ild_config_param_t {
 
     int32_t ild_enable;
     /**< @h2xmle_description {Enable or disable ILD mechanism.}
@@ -494,11 +499,11 @@ typedef struct param_id_mma_ild_config_param_t {
     @h2xmle_subgroup    {General}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_ild_config_param_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_ild_config_param_t param_id_mma_ild_config_param_t;
 
 // #define PARAM_ID_MMA_SPEECH_RESET_PERIOD 0x08001AD3
 
@@ -530,7 +535,7 @@ typedef struct param_id_mma_ild_config_param_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_speech_state_forget_factor_t {
+struct param_id_mma_speech_state_forget_factor_t {
 
     int16_t state_forget_factor;
     /**< @h2xmle_description {state forget factor in Q14}
@@ -545,11 +550,11 @@ typedef struct param_id_mma_speech_state_forget_factor_t {
     @h2xmle_visibility  {hide}
     @h2xmle_policy      {Advanced} */
 
-}param_id_mma_speech_state_forget_factor_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
-
+typedef struct param_id_mma_speech_state_forget_factor_t param_id_mma_speech_state_forget_factor_t;
 
 #define PARAM_ID_MMA_HISTORY_BUFFER_SIZE 0x08001ACF
 
@@ -559,17 +564,18 @@ typedef struct param_id_mma_speech_state_forget_factor_t {
 
 #include "spf_begin_pack.h"
 #include "spf_begin_pragma.h"
-typedef struct param_id_mma_history_buffer_size_t {
+struct param_id_mma_history_buffer_size_t {
 
     uint32_t history_buffer_size_in_ms;
     /**< @h2xmle_description {Desired duration of history buffer in milli seconds}
     @h2xmle_default     {2000}
     @h2xmle_range       {0..0xFFFFFFFF}*/
 
-}param_id_mma_history_buffer_size_t
+}
 #include "spf_end_pragma.h"
 #include "spf_end_pack.h"
 ;
+typedef struct param_id_mma_history_buffer_size_t param_id_mma_history_buffer_size_t;
 
 
 #define PARAM_ID_MMA_RESET 0x08001AD0
