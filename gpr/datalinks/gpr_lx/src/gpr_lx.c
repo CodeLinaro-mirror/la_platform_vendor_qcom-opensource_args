@@ -3,8 +3,9 @@
  *
  * This file has implementation platform wrapper for the GPR datalink layer
  *
- *  Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clea
  */
 #define LOG_TAG "gpr_dl_lx"
 
@@ -167,13 +168,11 @@ uint32_t put_buffer(gpr_dl_lx_port_t *dl_lx_port, void *buf)
 
     pthread_mutex_lock(&dl_lx_port->buff_list_lock);
     list_for_each_safe(item, temp_node, &dl_lx_port->buff_list) {
-        if (item != NULL) {
-            buffer_node = node_to_item(item, gpr_dl_lx_buf_t, node);
-            if (buffer_node && buffer_node->buffer == buf) {
-                AR_LOG_ERR(LOG_TAG,"%s:%d buffer already put error case", __func__, __LINE__);
-                pthread_mutex_unlock(&dl_lx_port->buff_list_lock);
-                return AR_EALREADY;
-            }
+        buffer_node = node_to_item(item, gpr_dl_lx_buf_t, node);
+        if (buffer_node && buffer_node->buffer == buf) {
+            AR_LOG_ERR(LOG_TAG,"%s:%d buffer already put error case", __func__, __LINE__);
+            pthread_mutex_unlock(&dl_lx_port->buff_list_lock);
+            return AR_EALREADY;
         }
     }
     buffer_node = (gpr_dl_lx_buf_t *)malloc(sizeof(gpr_dl_lx_buf_t));
