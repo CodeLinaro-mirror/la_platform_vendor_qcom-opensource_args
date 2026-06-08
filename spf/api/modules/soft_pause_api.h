@@ -6,7 +6,7 @@
  @brief This file contains Soft pause module APIs
 
   Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
-  SPDX-License-Identifier: BSD-3-Clause-Clear
+  SPDX-License-Identifier: BSD-3-Clause
 ==============================================================================*/
 // clang-format off
 /* =========================================================================
