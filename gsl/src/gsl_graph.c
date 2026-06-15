@@ -7,7 +7,7 @@
  * \copyright
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "acdb.h"
@@ -5034,7 +5034,7 @@ int32_t gsl_graph_prepare_to_change_single_gkv(struct gsl_graph *graph,
 		}
 	}
 
-	if (!old_gkv_found) {
+	if (!old_gkv_found || old_node == NULL) {
 		rc = AR_ENOTEXIST;
 		goto exit;
 	}
@@ -5238,6 +5238,8 @@ int32_t gsl_graph_change_single_gkv(struct gsl_graph *graph,
 			break;
 		}
 	}
+	if (old_node == NULL)
+		return AR_EBADPARAM;
 
 	preserved_sgids = &old_node->rtc_cache.preserved_sgids;
 	pruned_plus_reopen_sg_conn =

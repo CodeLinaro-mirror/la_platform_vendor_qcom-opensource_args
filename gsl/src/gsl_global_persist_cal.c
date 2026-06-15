@@ -5,8 +5,8 @@
  *      Manages global persist cal for subgraphs
  *
  * \copyright
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "gsl_global_persist_cal.h"
@@ -169,12 +169,6 @@ int32_t gsl_global_persist_cal_pool_remove(struct gsl_glbl_persist_cal *gpc)
 		--gpc->ref_cnt;
 
 	if (gpc->ref_cnt == 0) {
-		rc = gsl_shmem_free(&gpc->cal_data);
-		if (rc) {
-			GSL_ERR("gsl_shmem_free failed %d", rc);
-			goto exit;
-		}
-
 		rc = ar_list_delete(&gpc_pool.cal_list, &gpc->node);
 		if (rc) {
 			GSL_ERR("ar_list_delete failed %d", rc);

@@ -7,7 +7,7 @@
  *      Defines public APIs for Graph Service Layer (GSL)
  *
  *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  SPDX-License-Identifier: BSD-3-Clause
  */
 #ifdef __cplusplus
 extern "C" {

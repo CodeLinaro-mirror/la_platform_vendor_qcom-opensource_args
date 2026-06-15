@@ -6,7 +6,7 @@
  *      This file has implementation for selection of functions with ARM/DSP-specific processing.
  * \copyright
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <stdbool.h>
 #include "ar_osal_shmem.h" // Public API

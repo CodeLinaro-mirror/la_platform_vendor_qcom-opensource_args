@@ -6,7 +6,7 @@
  *
  * \copyright
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "gsl_common.h"
 #include "ar_osal_error.h"

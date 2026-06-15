@@ -5,8 +5,8 @@
  *      Implement GSL RTC functionalities
  *
  * \copyright
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "ar_osal_error.h"
@@ -366,6 +366,13 @@ int32_t gsl_rtc_graph_set_persist_data(struct gsl_graph *graph,
 	sg = gsl_graph_get_sg_ptr(graph, params->sgid);
 	if (!sg)
 		return AR_EFAILED;
+
+	if (sg->num_proc_ids >
+		sizeof(sg->persist_cal_data_per_proc) /
+		sizeof(sg->persist_cal_data_per_proc[0])) {
+		GSL_ERR("num_proc_ids invalid: %d", sg->num_proc_ids);
+		return AR_EBADPARAM;
+	}
 	GSL_DBG("num procs per SG - %d", sg->num_proc_ids);
 	for (int persist_cal_idx = 0; persist_cal_idx < sg->num_proc_ids; persist_cal_idx++) {
 		if (sg->persist_cal_data_per_proc[persist_cal_idx].proc_id == params->proc_id) {

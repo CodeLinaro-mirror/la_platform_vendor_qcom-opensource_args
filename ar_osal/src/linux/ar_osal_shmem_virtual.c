@@ -1,13 +1,13 @@
 /**
  *
- * \file ar_osal_shmem.c
+ * \file ar_osal_shmem_virtual.c
  *
  * \brief
  *      This file has implementation for Virtual Address based shared memory allocation for DSP.
 
  * \copyright
  *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- *  SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  SPDX-License-Identifier: BSD-3-Clause
  */
 
 

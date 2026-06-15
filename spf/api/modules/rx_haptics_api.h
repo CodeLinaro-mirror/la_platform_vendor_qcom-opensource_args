@@ -3,7 +3,7 @@
 
 /*==============================================================================
  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- SPDX-License-Identifier: BSD-3-Clause-Clear
+ SPDX-License-Identifier: BSD-3-Clause
 
   @file rx_haptics_api.h
   @brief This file contains APIs for Haptics Module
