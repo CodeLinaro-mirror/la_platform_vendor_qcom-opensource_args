@@ -7,7 +7,7 @@
  *      Common header file used by GSL modules.
  *
  * \copyright
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -66,7 +66,7 @@
 #define GSL_SPF_READ_WRITE_TIMEOUT_MS  (60000LL) /* 1 min */
 #else
 #define GSL_SPF_TIMEOUT_MS  (1000)
-#define GSL_GRAPH_OPEN_TIMEOUT_MS  (1000)
+#define GSL_GRAPH_OPEN_TIMEOUT_MS  (4000)
 #define GSL_SPF_READ_WRITE_TIMEOUT_MS  (1000)
 #endif
 
@@ -297,7 +297,8 @@ int32_t gsl_send_spf_cmd(struct gpr_packet_t **packet,
 	struct gsl_signal *sig_p, gpr_packet_t **rsp_pkt);
 int32_t gsl_send_spf_cmd_wait_for_basic_rsp(gpr_packet_t **packet,
 	struct gsl_signal *sig_p);
-
+int32_t gsl_send_spf_satellite_info(uint32_t proc_id,
+	uint32_t supported_ss_mask, uint32_t src_port, struct gsl_signal *sig_p);
 
 /** memory allocation helper functions */
 static inline void *gsl_mem_zalloc(size_t size)

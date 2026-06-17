@@ -5,8 +5,8 @@
  *      Main entry point for Graph Service Layer (GSL)
  *
  * \copyright
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #include "gsl_intf.h"
 #include "acdb.h"
@@ -72,6 +72,7 @@ ar_osal_mutex_t log_mutex;
 
 #define GSL_DYN_DL_RETRY_MS (500)
 #define GSL_DYN_DL_NUM_RETRIES 4
+#define GSL_DYN_DL_NUM_RETRIES_SSR 6
 
 #define GSL_SS_RETRY_MS (10)
 
@@ -771,79 +772,6 @@ exit:
 	return rc;
 }
 
-static int32_t gsl_send_spf_satellite_info(uint32_t proc_id,
-					   uint32_t supported_ss_mask)
-{
-	uint32_t i = 0, j = 0;
-	gpr_cmd_alloc_ext_t gpr_args;
-	int32_t rc = AR_EOK;
-	gpr_packet_t *send_pkt = NULL;
-	apm_cmd_header_t *apm_hdr;
-	apm_param_id_satellite_pd_info_t *sat_pd_info;
-	apm_module_param_data_t *param_hdr;
-
-	gpr_args.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
-	gpr_args.dst_domain_id = (uint8_t) proc_id;
-	gpr_args.src_port = GSL_MAIN_SRC_PORT;
-	gpr_args.dst_port = APM_MODULE_INSTANCE_ID;
-	gpr_args.opcode = APM_CMD_SET_CFG;
-	gpr_args.token = 0;
-	gpr_args.client_data = 0;
-	gpr_args.ret_packet = &send_pkt;
-	/* below allocate for worst case since payload size is small enough */
-	gpr_args.payload_size = sizeof(apm_cmd_header_t)
-		+ sizeof(apm_module_param_data_t)
-		+ sizeof(apm_param_id_satellite_pd_info_t)
-		+ ((AR_SUB_SYS_ID_LAST + 1) * sizeof(uint32_t));
-
-	rc = __gpr_cmd_alloc_ext(&gpr_args);
-	if (rc) {
-		GSL_ERR("Failed to allocate gpr pkt %d", rc);
-		goto exit;
-	}
-
-	apm_hdr = GPR_PKT_GET_PAYLOAD(apm_cmd_header_t, send_pkt);
-	apm_hdr->mem_map_handle = 0;
-	apm_hdr->payload_address_lsw = 0;
-	apm_hdr->payload_address_msw = 0;
-	apm_hdr->payload_size = sizeof(apm_module_param_data_t)
-		+ sizeof(apm_param_id_satellite_pd_info_t)
-		+ ((AR_SUB_SYS_ID_LAST + 1) * sizeof(uint32_t));
-
-	param_hdr = (apm_module_param_data_t *)(apm_hdr + 1);
-	param_hdr->module_instance_id = APM_MODULE_INSTANCE_ID;
-	param_hdr->param_id = APM_PARAM_ID_SATELLITE_PD_INFO;
-	param_hdr->param_size = sizeof(apm_param_id_satellite_pd_info_t)
-		+ ((AR_SUB_SYS_ID_LAST + 1) * sizeof(uint32_t));
-	param_hdr->error_code = 0;
-
-	sat_pd_info = (apm_param_id_satellite_pd_info_t *)(param_hdr + 1);
-
-	/*
-	 * disable ADSP from the bitmask for now as we assume master is on
-	 * ADSP. This can be revisited in the future once we add support for
-	 * multiple masters
-	 */
-	supported_ss_mask &= ~proc_id;
-	for (i = AR_SUB_SYS_ID_FIRST; i <= AR_SUB_SYS_ID_LAST; ++i) {
-		if (GSL_TEST_SPF_SS_BIT(supported_ss_mask, i))
-			sat_pd_info->proc_domain_id_list[j++] = i;
-	}
-
-	sat_pd_info->num_proc_domain_ids = j;
-	if (sat_pd_info->num_proc_domain_ids > 0) {
-		GSL_LOG_PKT("send_pkt", GSL_MAIN_SRC_PORT, send_pkt, sizeof(*send_pkt)
-			+ gpr_args.payload_size, NULL, 0);
-
-		rc = gsl_send_spf_cmd_wait_for_basic_rsp(&send_pkt,
-			&gsl_ctxt.rsp_signal);
-		if (rc)
-			GSL_ERR("failed to send spf satellite info rc %d", rc);
-	}
-exit:
-	return rc;
-}
-
 int32_t gsl_get_driver_data(const uint32_t module_id,
 	const struct gsl_key_vector *key_vect, void *data_payload,
 	uint32_t *data_payload_size)
@@ -1088,7 +1016,7 @@ int32_t gsl_init(struct gsl_init_data *init_data)
 		}
 
 		rc = gsl_send_spf_satellite_info(master_procs[i],
-						 supported_ss_mask);
+			supported_ss_mask, GSL_MAIN_SRC_PORT, &gsl_ctxt.rsp_signal);
 		if (rc) {
 			GSL_ERR("gsl_send_spf_satellite_info failed %d", rc);
 			goto mdf_utils_deinit;
@@ -1295,8 +1223,11 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 	struct gsl_graph *graph = NULL;
 	gsl_handle_t hdl = 0;
 	uint32_t supported_ss_mask = 0;
+	uint32_t num_procs = 0;
+	struct proc_domain_type *proc_domains = NULL;
 	bool_t is_shmem_supported = TRUE;
 	uint8_t i = 0;
+	uint8_t j = 0;
 	int32_t ss_retry_count = 10;
 
 	if (graph_handle == NULL)
@@ -1323,8 +1254,17 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 			// handle master proc restarting
 			gsl_shmem_remap_pre_alloc(i);
 			gsl_mdf_utils_get_supported_ss_info_from_master_proc(i, &supported_ss_mask);
+			gsl_mdf_utils_get_proc_domain_info(&proc_domains, &num_procs);
+			if (!proc_domains)
+				num_procs = 0;
+			/* Reset dynamic PD mask. It will be handled after dynamic PD is initialized. */
+			for (j = 0; j < num_procs; ++j) {
+				if (proc_domains[j].proc_type == DYNAMIC_PD)
+					supported_ss_mask &= ~(GSL_GET_SPF_SS_MASK(proc_domains[j].proc_id));
+			}
 			// open_close_lock will be acquired insides
-			rc = gsl_send_spf_satellite_info(i, supported_ss_mask);
+			rc = gsl_send_spf_satellite_info(i, supported_ss_mask,
+				GSL_MAIN_SRC_PORT, &gsl_ctxt.rsp_signal);
 			if (rc) {
 				GSL_ERR("gsl_send_spf_satellite_info failed for master_proc %d rc %d", i, rc);
 				continue;
@@ -1339,14 +1279,18 @@ int32_t gsl_open(const struct gsl_key_vector *graph_key_vect,
 				}
 			}
 
-			rc = gsl_do_load_bootup_dyn_modules(i, NULL);
-			if (rc != AR_EOK && rc != AR_ENOTEXIST) {
-				GSL_ERR("dynamic module load failed for master_proc %d rc %d", i, rc);
-				continue;
-			}
-
+            /* retry for up to 3 seconds to help in cases
+			    where ADSP RPC thread not ready */
 			GSL_MUTEX_LOCK(gsl_ctxt.open_close_lock);
-			gsl_ctxt.spf_restart[i] = FALSE;
+			for (j = 0; j < GSL_DYN_DL_NUM_RETRIES_SSR; ++j) {
+				rc = gsl_do_load_bootup_dyn_modules(i, NULL);
+				if (rc) {
+					ar_osal_micro_sleep(GSL_TIMEOUT_US(GSL_DYN_DL_RETRY_MS));
+				} else {
+					gsl_ctxt.spf_restart[i] = FALSE;
+					break;
+				}
+			}
 		}
 		GSL_MUTEX_UNLOCK(gsl_ctxt.open_close_lock);
 	}
