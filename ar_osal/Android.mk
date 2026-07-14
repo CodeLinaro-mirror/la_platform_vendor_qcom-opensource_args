@@ -77,6 +77,7 @@ ifeq ($(TARGET_AUDIO_DYNAMIC_PD_ENABLED), true)
 endif
 
 ifeq ($(TARGET_PD_SERVICE_ENABLED), true)
+ifneq ($(AUDIO_FEATURE_ARE_ON_MDSP), true)
     LOCAL_SHARED_LIBRARIES += libpdmapper
     LOCAL_SHARED_LIBRARIES += libpdnotifier
     LOCAL_HEADER_LIBRARIES += libpdmapper_headers
@@ -89,9 +90,11 @@ ifeq ($(TARGET_PD_SERVICE_ENABLED), true)
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/qmi/inc
     LOCAL_CFLAGS += -DAR_OSAL_USE_PD_NOTIFIER
 endif
+endif
 
 ifeq ($(AUDIO_FEATURE_ARE_ON_MDSP), true)
     LOCAL_CFLAGS += -DMDSP_PROC
+    LOCAL_CFLAGS += -DAR_OSAL_USE_MODEM_SSR
 endif
 
 LOCAL_SHARED_LIBRARIES += libcutils
