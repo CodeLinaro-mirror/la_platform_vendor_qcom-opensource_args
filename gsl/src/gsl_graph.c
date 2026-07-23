@@ -1087,7 +1087,12 @@ static int32_t gsl_graph_send_persist_cal(struct gsl_graph *graph,
 				rc = gsl_subgraph_query_persist_cal_by_mem(sg, new_ckv,
 					ACDB_HW_ACCEL_MEM_DEFAULT, graph->proc_id, procid);
 				if (rc == AR_ENOTEXIST) {
-					goto continue_cma;
+					/*
+                                         * Fix: continue handling persist data for other proc ids without exiting to continue_cma
+					 */
+					GSL_DBG("no persist cal for sg_id=0x%x procid_idx=%d proc_id=%d — skipping to next proc",
+							sg->sg_id, procid, sg->persist_cal_data_per_proc[procid].proc_id);
+					continue;
 				} else if (rc) {
 					GSL_ERR("persist cal query for sg_id %d failed %d",
 						sg->sg_id, rc);
