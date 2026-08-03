@@ -1689,8 +1689,8 @@ int32_t GetOffloadedParamList(AcdbUintList *offloaded_param_list)
         return status;
     }
 
-    offloaded_param_list->count = *(uint32_t*)prop.property_data;
-    offloaded_param_list->list = ((uint32_t*)prop.property_data + 1);
+    memcpy(&offloaded_param_list->count, prop.property_data, sizeof(uint32_t));
+    offloaded_param_list->list = (uint32_t*)(prop.property_data + sizeof(uint32_t));
 
     return status;
 }
