@@ -1,3 +1,4 @@
+ifneq ($(TARGET_SDV_ENABLED), true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -40,6 +41,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/datalinks/gpr_lx/inc
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/api
+
 LOCAL_CFLAGS := -D_ANDROID_ \
         -DSESSION_ARRAY_SIZE=200 \
         -DGPR_USE_CUTILS
@@ -49,3 +51,4 @@ LOCAL_CFLAGS += -DPLATFORM_SLATE
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+endif # TARGET_SDV_ENABLED

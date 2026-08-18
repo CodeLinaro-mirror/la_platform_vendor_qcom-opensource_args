@@ -1,3 +1,4 @@
+ifneq ($(TARGET_SDV_ENABLED), true)
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -83,3 +84,4 @@ LOCAL_SHARED_LIBRARIES += libcutils
 LOCAL_HEADER_LIBRARIES += vendor_common_inc
 
 include $(BUILD_SHARED_LIBRARY)
+endif # TARGET_SDV_ENABLED

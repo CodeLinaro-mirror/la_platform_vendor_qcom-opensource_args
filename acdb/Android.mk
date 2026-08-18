@@ -1,3 +1,4 @@
+ifneq ($(TARGET_SDV_ENABLED), true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -174,3 +175,4 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_LDLIBS := -llog
 
 include $(BUILD_EXECUTABLE)
+endif # TARGET_SDV_ENABLED
