@@ -550,7 +550,7 @@ static int32_t gsl_shmem_unmap_page_from_spf(struct gsl_shmem_page *page,
 
 	/* if the spf master or any satellites are down silently skip unmap */
 	if ((gsl_spf_ss_state_get(master_proc_id) & spf_ss_unmap_mask) !=
-		page->spf_ss_mask)
+		spf_ss_unmap_mask)
 		return AR_EOK;
 
 	/* if this is a CMA page we need to set client data on all gpr packets */
