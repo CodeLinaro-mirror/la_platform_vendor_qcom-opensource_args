@@ -6,7 +6,7 @@
  * \brief
  *      Multi-DSP framework utilities library
  *
- *  Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *  SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -15,6 +15,7 @@
   * @h2xml_title_date {08/01/2018}
   */
  #include "ar_osal_types.h"
+ #include "gsl_common.h"
 
 #define GSL_MULTI_DSP_FWK_DATA_MID 0x2005
 
@@ -216,7 +217,8 @@ int32_t gsl_mdf_utils_shmem_free(uint32_t ss_mask);
  * \param[in] master_proc_id: Master proc id
  */
 int32_t gsl_mdf_utils_register_dynamic_pd(uint32_t ss_mask,
-	uint32_t master_proc_id);
+	uint32_t master_proc_id, uint32_t src_port,
+	struct gsl_signal *sig, uint32_t *dyn_ss_mask);
 
 /*
  * \brief Releases dynamic PD and deallocates shared memory for given
@@ -226,6 +228,20 @@ int32_t gsl_mdf_utils_register_dynamic_pd(uint32_t ss_mask,
  */
 int32_t gsl_mdf_utils_deregister_dynamic_pd(uint32_t ss_mask,
 	uint32_t master_proc_id);
+
+/*
+ * \brief Check if the given subsystem is of dynamic PD type
+ * \param[in] sys_id: proc id
+ * \return TRUE if dynamic PD, FALSE otherwise.
+ */
+bool_t gsl_mdf_utils_is_dynamic_pd(uint32_t proc_id);
+
+/*
+ * \brief Check if dynamic PD deinit is pending for a given subsystem
+ * \param[in] sys_id: proc id
+ * \return TRUE if pending, FALSE otherwise.
+ */
+bool_t gsl_mdf_utils_is_dynamic_pd_deinit_pending(uint32_t proc_id);
 
 /*
  * \brief initialize MDF utils, internally queries ACDB to get supported SS info
