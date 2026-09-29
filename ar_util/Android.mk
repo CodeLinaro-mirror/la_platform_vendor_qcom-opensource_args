@@ -1,3 +1,4 @@
+ifneq ($(TARGET_SDV_ENABLED), true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -55,3 +56,4 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/api \
                     $(LOCAL_PATH)/inc
 
 include $(BUILD_EXECUTABLE)
+endif # TARGET_SDV_ENABLED

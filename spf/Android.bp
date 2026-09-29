@@ -1,7 +1,16 @@
-cc_library_headers {
+soong_config_module_type {
+    name: "spf_cc_library_headers",
+    module_type: "cc_library_headers",
+    config_namespace: "qti",
+    bool_variables: ["AUDIO_SDV_APEX_ENABLED"],
+    properties: [
+        "apex_available",
+    ],
+}
+
+spf_cc_library_headers {
     name: "libspf-headers",
     cflags: ["-D__H2XML__"],
-
     export_include_dirs: [
         "api",
         "api/apm",
@@ -9,6 +18,13 @@ cc_library_headers {
         "api/modules",
         "api/vcpm",
     ],
-
     proprietary: true,
+    soong_config_variables: {
+        AUDIO_SDV_APEX_ENABLED: {
+            apex_available: [
+                "//apex_available:platform",
+                "//apex_available:anyapex",
+            ],
+        },
+    },
 }
