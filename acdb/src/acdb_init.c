@@ -38,8 +38,7 @@ bool_t AcdbInitDoSwVersionsMatch(acdb_file_version_t* acdb_finfo,
 	if ((acdb_finfo->major == acdb_delta_finfo->major) &&
 		(acdb_finfo->minor == acdb_delta_finfo->minor) &&
 		(acdb_finfo->revision == acdb_delta_finfo->revision) &&
-		(acdb_finfo->cpl_info == INF ||
-			acdb_finfo->cpl_info == acdb_delta_finfo->cpl_info))
+		(acdb_finfo->cpl_info == acdb_delta_finfo->cpl_info))
 	{
 		return TRUE;
 	}
